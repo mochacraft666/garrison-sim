@@ -1,0 +1,2616 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卫戍协议 · 配队模拟器</title>
+<style>:root{
+  --bg:#0a0c10; --bg2:#0e1218; --panel:#141a21; --panel2:#1a222b; --line:#25303b;
+  --text:#e9eef5; --dim:#8a97a6; --dim2:#5d6b7a;
+  --gold:#e6c27a; --gold2:#a98a45; --red:#e2605c; --green:#5fd39a; --blue:#63c6e8; --violet:#a98cf0;
+  --t1:#7f8c99; --t2:#6fa86f; --t3:#4f9ad6; --t4:#9b7fd4; --t5:#e0a45e; --t6:#e2746a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#16202b 0%,var(--bg) 55%);color:var(--text);
+  font:14px/1.5 "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2b3742;border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* ---------- 顶栏 ---------- */
+header{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#10161d,#0c1116);flex:0 0 auto;flex-wrap:nowrap;position:relative;z-index:5;min-height:48px}
+header .brand,header .stats,header .btns{flex:0 0 auto}
+header .btns{margin-left:auto;flex-wrap:nowrap}
+@media (max-width:1500px){.brand span{display:none}.stat{padding:2px 7px;font-size:11.5px}}
+.brand{display:flex;align-items:baseline;gap:8px}
+.brand b{font-size:16px;letter-spacing:.14em;color:var(--gold)}
+.brand span{font-size:11px;color:var(--dim2);letter-spacing:.08em}
+.stats{display:flex;gap:6px;margin-left:6px}
+.stat{display:flex;align-items:center;gap:5px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:#0e141a;font-size:11.5px;color:var(--dim);white-space:nowrap}
+.stat b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.stat.on b{color:var(--gold)}
+.spacer{flex:1}
+.btns{display:flex;gap:6px}
+.btn{padding:4px 9px;border:1px solid var(--line);border-radius:6px;background:#131a22;color:var(--dim);font-size:12px;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:#3a4a5a;color:var(--text);background:#18222c}
+.btn.primary{border-color:var(--gold2);color:#1a1408;background:linear-gradient(180deg,#e6c27a,#c9a45c);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+
+/* ---------- 主体三栏 ---------- */
+main{flex:1;display:grid;grid-template-columns:290px 1fr 320px;gap:0;min-height:0}
+.pane{min-height:0;display:flex;flex-direction:column;background:var(--bg2)}
+.pane.left{border-right:1px solid var(--line)}
+.pane.right{border-left:1px solid var(--line)}
+.pane-title{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12px;color:var(--dim);letter-spacing:.08em;border-bottom:1px solid var(--line)}
+.pane-title b{color:var(--text);font-weight:600;letter-spacing:0}
+.pane-title .hint{margin-left:auto;font-size:11px;color:var(--dim2)}
+
+/* ---------- 候选池 ---------- */
+.pool-tools{padding:9px 12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
+.search{width:100%;padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:#0d1319;color:var(--text);outline:none;font-size:12.5px}
+.search:focus{border-color:#3d5166}
+.chips{display:flex;flex-wrap:wrap;gap:4px;max-height:92px;overflow-y:auto;padding-bottom:2px}
+.chips::-webkit-scrollbar{width:5px}
+.chips::-webkit-scrollbar-thumb{background:#2a3644;border-radius:3px}
+.chip{padding:2px 7px;border-radius:5px;border:1px solid var(--line);background:#101820;color:var(--dim);font-size:11px;white-space:nowrap}
+.chip:hover{color:var(--text);border-color:#3a4a5a}
+.chip.on{border-color:var(--gold2);color:var(--gold);background:#1d1a12}
+.chip.core{--c:var(--gold)}
+.chip.extra{--c:var(--blue)}
+.chip.on.extra{border-color:#2f6d80;color:var(--blue);background:#0e1c22}
+.pool-list{flex:1;overflow:auto;padding:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;align-content:start}
+.op{position:relative;display:flex;flex-direction:column;gap:3px;padding:6px;border-radius:7px;border:1px solid var(--line);background:var(--panel);cursor:grab;user-select:none;transition:.12s}
+.op:hover{border-color:#43566a;transform:translateY(-1px)}
+.op.on-field{opacity:.32;filter:grayscale(.7)}
+.op .av{height:46px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#0c1116;overflow:hidden;position:relative}
+.op .av img{width:100%;height:100%;object-fit:cover}
+.op .nm{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op .cv{display:flex;gap:3px;flex-wrap:wrap}
+.op .cv i{font-style:normal;font-size:9.5px;line-height:1;padding:2px 3px;border-radius:3px;background:#1b242e;color:var(--dim)}
+.op .badge{position:absolute;right:4px;bottom:4px;font-size:9px;padding:1px 3px;border-radius:3px;background:#22303d;color:var(--gold);border:1px solid #35485a;max-width:calc(100% - 56px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- 中栏 ---------- */
+.stage{flex:1;display:flex;flex-direction:column;min-height:0}
+.slots-wrap{padding:10px 14px 6px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0d1319,#0b1015)}
+.slots{display:grid;grid-template-columns:repeat(8,1fr);gap:7px}
+.slot{position:relative;height:88px;border-radius:8px;border:1px dashed #2b3742;background:#0e151c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.15s;cursor:pointer}
+.slot.empty:after{content:"+";color:#2c3945;font-size:20px}
+.slot.drag-over{border-color:var(--gold);background:#1a1710}
+.slot.filled{border-style:solid;border-color:#2f3f4e;background:linear-gradient(180deg,#18222c,#121a22);cursor:grab}
+.slot .s-av{width:46px;height:46px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#0c1116}
+.slot .s-nm{font-size:11.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
+.slot .s-tags{display:flex;gap:2px;font-size:9px;color:var(--dim2)}
+.slot .s-elite{position:absolute;top:3px;right:4px;font-size:9px;color:var(--gold);opacity:.85}
+.slot .s-lock{position:absolute;top:3px;left:4px;font-size:9px;color:var(--red)}
+.slot.sel{box-shadow:0 0 0 1px var(--gold) inset}
+.bench-wrap{display:flex;align-items:center;gap:8px;padding:6px 14px 9px;background:#0b1015}
+.bench-wrap .lbl{font-size:11px;color:var(--dim2);white-space:nowrap}
+.bench{display:flex;gap:8px;flex:1;min-height:96px;align-items:flex-start;border:1px dashed #253039;border-radius:8px;padding:8px;overflow-x:auto}
+.bench.drag-over{border-color:var(--gold)}
+.bench .b-op{display:flex;flex-direction:column;align-items:center;gap:4px;width:72px;padding:4px;border-radius:7px;background:#121a22;border:1px solid #232e39;font-size:10.5px;cursor:pointer}
+.bench .b-nm{max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);text-align:center}
+.bench .b-op .dot{width:6px;height:6px;border-radius:50%}
+
+.graph-wrap{flex:1;position:relative;min-height:0}
+#graph{width:100%;height:100%;display:block}
+.graph-tabs{position:absolute;left:12px;top:10px;display:flex;gap:4px;z-index:2}
+.gtab{padding:3px 9px;font-size:11.5px;border:1px solid var(--line);border-radius:5px;background:#0e141a99;color:var(--dim);backdrop-filter:blur(4px)}
+.gtab.on{color:var(--gold);border-color:var(--gold2)}
+.tree{position:absolute;inset:0;overflow:auto;padding:16px;display:none}
+.tree svg{display:block}
+.matrix{position:absolute;inset:0;overflow:auto;padding:44px 16px 16px;display:none}
+.matrix table{border-collapse:separate;border-spacing:2px;font-size:10.5px}
+.matrix th{color:var(--dim);font-weight:400;padding:2px 4px;text-align:center;white-space:nowrap}
+.matrix th.rot{writing-mode:vertical-rl;height:58px;text-align:center;vertical-align:bottom;font-size:10px;color:#7d8b99;letter-spacing:.02em}
+.matrix td{width:21px;height:18px;border-radius:3px;background:#1b2734;box-shadow:inset 0 0 0 1px #0d141c}
+.matrix td.hit{background:var(--c);opacity:.9}
+.matrix td.lit{box-shadow:0 0 0 1px var(--gold) inset}
+.matrix .rowname{color:var(--dim);padding-right:6px;white-space:nowrap}
+
+/* ---------- 盟约面板 ---------- */
+.empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3d4a58;font-size:13px;letter-spacing:.04em;pointer-events:none}
+.filter-modes{display:flex;gap:0;margin:8px 0 2px;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:max-content}
+.fmode{flex:1;padding:3px 14px;font-size:11.5px;background:#0f151c;color:var(--dim2);border:0;cursor:pointer;transition:.15s}
+.fmode.on{background:#241d10;color:var(--gold)}
+.cov-ico{width:28px;height:28px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 0 3px #0008)}
+.wizard-modal{width:min(860px,94vw);max-height:88vh;display:flex;flex-direction:column}
+.wiz-body{padding:16px 20px;overflow:auto;flex:1;min-height:280px}
+.wiz-foot{display:flex;align-items:center;gap:10px;padding:10px 18px;border-top:1px solid var(--line);background:#0c1218}
+.wiz-tip{flex:1;text-align:center;font-size:11.5px;color:var(--dim2)}
+.wcard{display:flex;gap:10px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:#0f151c;cursor:pointer;transition:.14s}
+.wcard:hover{border-color:#3b4c5d}
+.wcard.on{border-color:var(--gold2);background:#1b1710}
+.wcard img{width:30px;height:30px;object-fit:contain}
+.wcard .nm{font-size:13px;font-weight:600}
+.wcard .ts{font-size:11px;color:var(--dim2)}
+.wcard .lv{margin-left:auto;font-size:11px;color:var(--gold)}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:10px}
+.wsec{font-size:12px;color:var(--dim2);letter-spacing:.06em;margin-top:14px}
+.wres{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;background:#0f151c}
+.wres .top{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--dim)}
+.wres .team{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.wres .mini{display:flex;align-items:center;gap:4px;font-size:11.5px;background:#141d26;border:1px solid #232f3b;border-radius:999px;padding:2px 8px}
+.help-modal{width:min(760px,92vw);max-height:82vh}
+.help-body{padding:16px 20px 22px;overflow:auto;font-size:12.5px;line-height:1.75;color:#b6c2cf}
+.help-body h4{margin:16px 0 6px;color:var(--gold);font-size:13px;letter-spacing:.06em}
+.help-body h4:first-child{margin-top:0}
+.help-body b{color:#e8eef4}
+.help-body .kv{color:#8c99a7}
+.help-body ul{margin:4px 0 8px;padding-left:18px}
+.help-body li{margin:2px 0}
+.d-actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.btn.on{border-color:var(--gold2);color:var(--gold);background:#241d10}
+.trash{display:none}
+body.dragging .trash{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;margin:8px 14px 2px;border-radius:10px;border:1px dashed #a34b4b;background:#2c1013;color:#e8b1b1;font-size:12.5px}
+body.dragging .trash.hot{background:#5a1a20;border-color:#e2605c;color:#fff;box-shadow:0 0 18px #e2605c66}
+.opt-modal{width:min(720px,92vw);max-height:84vh;display:flex;flex-direction:column}
+.opt-body{padding:14px 20px 22px;overflow:auto;flex:1}
+.opt-sec{margin-bottom:18px}
+.opt-sec h4{margin:0 0 8px;font-size:12.5px;color:var(--gold);letter-spacing:.06em}
+.opt-row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12px;color:var(--dim)}
+.opt-row label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.opt-row .hint{color:var(--dim2);font-size:11px}
+.opt-slider{display:grid;grid-template-columns:90px 1fr 46px;gap:10px;align-items:center;margin:8px 0;font-size:12px;color:var(--dim)}
+.opt-slider input[type=range]{width:100%;accent-color:var(--gold)}
+.opt-slider .val{text-align:right;color:var(--gold);font-variant-numeric:tabular-nums}
+.opt-slider .desc{grid-column:2 / span 2;font-size:10.5px;color:var(--dim2);margin-top:-4px}
+.opt-preview{width:100%;height:240px;background:#080d12;border:1px solid var(--line);border-radius:8px;margin-top:6px;display:block}
+.opt-preview-note{font-size:11px;color:var(--dim2);margin:10px 0 0}
+.opt-checks{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 0 22px;font-size:11.5px;color:var(--dim)}
+.opt-checks label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.chip-sec{width:100%;font-size:10px;color:#6b7887;letter-spacing:.1em;margin:3px 0 0}
+.autobench{margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11px;color:var(--dim2)}
+.ab-ck{display:flex;align-items:center;gap:4px;cursor:pointer}
+.ab-cfg{font-size:10.5px;padding:1px 6px}
+.ab-list{width:100%;display:none;flex-wrap:wrap;gap:4px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:#0d1319}
+.ab-list.open{display:flex}
+.ab-list label{display:flex;align-items:center;gap:3px;font-size:10.5px;color:var(--dim);cursor:pointer}
+.cov.dim{opacity:.55;filter:grayscale(.55)}
+.matrix td.mute{opacity:.32}
+.tier-filter{display:flex;gap:4px;margin:6px 0 2px;flex-wrap:wrap}
+.tier-filter .chip{font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--line);background:#0f151c;color:var(--dim2);cursor:pointer}
+.tier-filter .chip.on{border-color:var(--gold2);color:var(--gold);background:#1a1510}
+.pivotSel{width:100%;margin-top:8px;background:#0f151c;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 6px;font-size:11.5px}
+.cov-group{padding:6px 10px 2px;font-size:10.5px;color:var(--dim2);letter-spacing:.12em}
+.cov-list{flex:1;overflow:auto;padding:4px 8px 12px;display:flex;flex-direction:column;gap:5px}
+.cov{position:relative;flex:0 0 auto;display:flex;gap:9px;align-items:flex-start;padding:8px 9px;border-radius:7px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:.14s;overflow:hidden}
+.cov-badge{width:42px;height:42px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#1c2a38,#080d12);border:1px solid var(--cc);box-shadow:0 0 8px #0008,inset 0 0 10px #0009}
+.cov.active .cov-badge{box-shadow:0 0 12px var(--cc),inset 0 0 8px #0006}
+.cov-body{flex:1;min-width:0}
+.cov:hover{border-color:#3b4c5d}
+.cov.hl{border-color:var(--gold2);box-shadow:0 0 0 1px #6b5a2a inset,0 0 12px #e6c27a22}
+.cov.active{border-color:var(--cc);background:linear-gradient(180deg,#1a232d,#141c24)}
+.cov.active:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cc)}
+.cov .row1{display:flex;align-items:center;gap:6px}
+.cov .nm{font-size:12.5px;font-weight:600}
+.cov .cnt{margin-left:auto;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.cov .cnt b{color:var(--text);font-size:13px}
+.cov .bar{height:3px;border-radius:2px;background:#1e2833;margin:5px 0 4px;overflow:hidden}
+.cov .bar i{display:block;height:100%;background:var(--cc);transition:.25s}
+.cov .eff{font-size:10.5px;color:#7a8794;line-height:1.42;max-height:2.85em;overflow:hidden}
+.cov.active .eff{color:#93a1af}
+.cov .rate{font-size:10px;color:var(--green);font-variant-numeric:tabular-nums}
+.cov .ban{font-size:9px;color:var(--red);border:1px solid #4a2b2b;border-radius:3px;padding:0 3px}
+.cov.banned{opacity:.42}
+.cov .gate{font-size:9.5px;color:var(--violet)}
+
+/* ---------- 详情 ---------- */
+.detail{position:fixed;right:336px;bottom:16px;width:320px;max-height:60vh;overflow:auto;background:#121a22f2;border:1px solid #2c3a48;border-radius:10px;padding:12px;backdrop-filter:blur(8px);display:none;z-index:30;box-shadow:0 12px 40px #0008}
+.detail.show{display:block}
+.detail h3{margin:0 0 6px;font-size:14px}
+.detail .k{color:var(--dim2);font-size:11px;margin-top:8px;letter-spacing:.06em}
+.detail .t{font-size:12px;color:var(--dim);line-height:1.6}
+.detail .t b{color:var(--text)}
+
+/* ---------- 求解面板 ---------- */
+.overlay{position:fixed;inset:0;background:#05080bd9;backdrop-filter:blur(3px);display:none;z-index:50;padding:40px}
+.overlay.show{display:flex;justify-content:center}
+.modal{width:min(1080px,100%);max-height:calc(100vh - 80px);background:#0d141b;border:1px solid #2a3846;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px #0009}
+.modal header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101821,#0c1218);flex-wrap:nowrap;min-height:0}
+.modal header b{white-space:nowrap}
+.modal .body{padding:14px 18px;overflow:auto;flex:1}
+.modal .foot{padding:10px 18px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+.sec{margin-bottom:14px}
+.sec>.h{font-size:11px;color:var(--dim2);letter-spacing:.1em;margin-bottom:6px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:#101820;color:var(--dim);font-size:12px;transition:.12s}
+.tag.lv1{border-color:var(--gold2);color:var(--gold);background:#1d1a12}
+.tag.lv2{border-color:#e8a94f;color:#ffd08a;background:#2a1f0d;box-shadow:0 0 0 1px #e8a94f33 inset}
+.tag.lv3{border-color:#7a4b2f;color:#c98b62;background:#241610}
+.tag:hover{filter:brightness(1.12)}
+.opt-row{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--dim)}
+.opt{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+#solverOverlay select{background:#0f141a;color:#dfe7ef;border:1px solid #2a3440;border-radius:6px;padding:4px 6px;font:inherit;outline:none}
+.res{display:flex;gap:14px;align-items:flex-start}
+.res .resmain{flex:1;min-width:0}
+.res .covs{display:flex;flex-wrap:wrap;gap:6px;width:170px;flex:none;justify-content:flex-end;align-content:flex-start;margin:0}
+.res .covic{display:inline-flex;align-items:center;gap:4px;background:#0f141a;border:1px solid #2a3440;border-radius:6px;padding:3px 5px;font-size:12px;color:#c9d4de}
+.res .covic img{width:26px;height:26px;border-radius:4px;display:block}
+.res .covic b{color:#e6c27a;font-weight:600;font-size:12px}
+.opt input[type=checkbox]{accent-color:#c9a45c}
+.num{width:52px;padding:3px 6px;border-radius:5px;border:1px solid var(--line);background:#0c1218;color:var(--text);text-align:center}
+.results{display:flex;flex-direction:column;gap:8px}
+.res{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#111922;transition:.14s}
+.res:hover{border-color:#3d5166;background:#152029}
+.res .top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.res .size{font-size:13px;font-weight:700;color:var(--gold)}
+.res .stat{font-size:11px;border:0;background:none;padding:0}
+.res .team{display:flex;gap:4px;flex-wrap:wrap}
+.mini{display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:5px;background:#182028;border:1px solid #27313c;font-size:11px}
+.mini .d{width:5px;height:5px;border-radius:50%}
+.empty-tip{padding:20px;text-align:center;color:var(--dim2);font-size:12.5px}
+
+/* 浮动拖拽幽灵 */
+.drag-ghost{position:fixed;z-index:99;pointer-events:none;padding:6px 10px;border-radius:7px;background:#1b2632;border:1px solid var(--gold2);color:var(--text);font-size:12px;box-shadow:0 8px 24px #000a;transform:translate(-50%,-50%)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#18222ce8;border:1px solid #33465a;color:var(--text);padding:8px 14px;border-radius:8px;font-size:12.5px;opacity:0;transition:.25s;z-index:80;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+footer{padding:4px 14px;border-top:1px solid var(--line);font-size:10.5px;color:var(--dim2);display:flex;gap:14px;background:#0a0f14}
+footer a{color:#6f8ba3;text-decoration:none}
+.foot-link{cursor:pointer;color:#6f8ba3;text-decoration:underline;text-underline-offset:2px}
+.foot-link:hover{color:#9fc0d8}
+.help-note{margin:8px 0 2px;padding:6px 8px;border-left:3px solid #3a4651;background:#0f141a;color:#8a97a5;font-size:12px}
+@media (max-width:1200px){main{grid-template-columns:250px 1fr 280px}.slots{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><b>卫戍协议</b><span>配队模拟器 · <i id="season"></i></span></div>
+    <div class="stats">
+      <div class="stat on">场上 <b id="stField">0/8</b></div>
+      <div class="stat">整备区 <b id="stBench">0</b></div>
+      <div class="stat">点亮 <b id="stLit">0</b> 档</div>
+      <div class="stat">每回合 <b id="stRate">0</b> 层</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="btns">
+      <button class="btn ghost" id="btnUndo" title="撤销">↶</button>
+      <button class="btn ghost" id="btnClear">清空</button>
+      <button class="btn" id="btnBan">本局禁用</button>
+      <button class="btn" id="btnOptions" title="选项">选项</button>
+      <button class="btn" id="btnWizard" title="向导配队">向导</button>
+      <button class="btn" id="btnHelp" title="使用教程">教程</button>
+      <button class="btn" id="btnSave">存档</button>
+      <button class="btn primary" id="btnSolve">一键求解</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="pane left">
+      <div class="pane-title"><b>候选干员</b><span class="hint" id="poolCount"></span></div>
+      <div class="pool-tools">
+        <input class="search" id="search" placeholder="搜索干员名…">
+        <div class="filter-modes">
+          <button class="fmode on" data-mode="tier">等阶</button>
+          <button class="fmode" data-mode="cov">盟约</button>
+        </div>
+        <div class="tier-filter" id="tierFilter"></div>
+        <div class="chips" id="covFilter"></div>
+
+      </div>
+      <div class="pool-list" id="pool"></div>
+    </aside>
+
+    <section class="pane stage">
+      <div class="trash" id="trash"><span>✕</span>松手移除该干员</div>
+      <div class="slots-wrap">
+        <div class="slots" id="slots"></div>
+      </div>
+      <div class="bench-wrap">
+        <span class="lbl">整备区</span>
+        <div class="bench" id="bench"></div>
+        <span class="lbl" id="benchHint">备用干员 · 不占场上人数</span>
+      </div>
+      <div class="graph-wrap">
+        <div class="graph-tabs">
+          <button class="gtab on" data-view="graph">关系图谱</button>
+          <button class="gtab" data-view="matrix">矩阵</button>
+          <button class="gtab" data-view="tree">配队树</button>
+          <button class="btn ghost" id="btnShare" style="margin-left:auto">复制配队码</button>
+          <button class="btn ghost" id="btnPng">导出图谱</button>
+        </div>
+        <canvas id="graph"></canvas>
+        <div class="empty-hint" id="emptyHint">从左侧拖入干员开始配队，或点右上角「一键求解」直接生成</div>
+        <div class="matrix" id="matrix"></div>
+        <div class="tree" id="tree"></div>
+      </div>
+    </section>
+
+    <aside class="pane right">
+      <div class="pane-title"><b>盟约</b><span class="hint" id="covHint"></span></div>
+      <div class="cov-list" id="covList"></div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>数据：PRTS《卫戍协议·规程》CC BY-NC-SA · NGA 解包整理</span>
+    <span>游戏素材版权归上海鹰角网络科技有限公司</span>
+    <span class="foot-link" id="btnNotice" title="查看完整版权与下架声明">版权声明</span>
+    <span style="margin-left:auto">非官方工具 · 仅供学习交流 · 不收费</span>
+  </footer>
+</div>
+
+<div class="detail" id="detail"></div>
+
+<div class="overlay" id="optOverlay">
+  <div class="modal opt-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">选项</b>
+      <span style="font-size:11.5px;color:var(--dim2)">设置会保存在本地</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeOpt">✕</button>
+    </header>
+    <div class="modal-body opt-body" id="optBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="wizardOverlay">
+  <div class="modal wizard-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">向导配队</b>
+      <span style="font-size:11.5px;color:var(--dim2)" id="wizStep">第 1 步 / 共 3 步</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeWizard">✕</button>
+    </header>
+    <div class="modal-body wiz-body" id="wizBody"></div>
+    <footer class="wiz-foot">
+      <button class="btn" id="wizPrev">上一步</button>
+      <span class="wiz-tip" id="wizTip"></span>
+      <button class="btn primary" id="wizNext">下一步</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="helpOverlay">
+  <div class="modal help-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">使用教程</b>
+      <span style="font-size:11.5px;color:var(--dim2)">操作 · 规则 · 求解器 · 说明</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeHelp">✕</button>
+    </header>
+    <div class="modal-body help-body" id="helpBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="solverOverlay">
+  <div class="modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">一键求解</b>
+      <span style="font-size:11.5px;color:var(--dim2)">选择想点亮的盟约档位 → 计算满足条件的最少人数配队</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeSolver">✕</button>
+    </header>
+    <div class="body">
+      <div class="sec"><div class="h">核心盟约（点击 3 档 → 6 档 → 取消）</div><div class="tags" id="tagCore"></div></div>
+      <div class="sec"><div class="h">附加盟约</div><div class="tags" id="tagExtra"></div></div>
+      <div class="sec">
+        <div class="h">约束</div>
+        <div class="opt-row">
+          <label class="opt"><input type="checkbox" id="optArchive"> 人事部档案（场上 9 人）</label>
+          <label class="opt"><input type="checkbox" id="optPivot"> 使用变形同构体</label>
+          <input class="num" id="pivotCount" type="number" min="0" max="3" value="1" disabled>
+          <label class="opt"><input type="checkbox" id="optLocked"> 保留场上已有干员</label>
+          <label class="opt"><input type="checkbox" id="optHarmony" checked> 队伍中是否有魔王（调和 +1 人）</label>
+          <label class="opt">排序
+            <select id="optSort">
+              <option value="cov">激活盟约优先</option>
+              <option value="tier">棋子等阶优先</option>
+            </select>
+          </label>
+          <span id="solveInfo" style="color:var(--dim2);font-size:11.5px"></span>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="h">结果（按人数升序）</div>
+        <div class="results" id="results"><div class="empty-tip">选好盟约后点「开始计算」</div></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn primary" id="runSolve">开始计算</button>
+      <span style="font-size:11.5px;color:var(--dim2)" id="solveStat"></span>
+      <div class="spacer"></div>
+      <label class="opt" style="font-size:11.5px"><input type="checkbox" id="optStrict"> 严格模式（不多不少）</label>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>window.__DATA__ = {"meta":{"season":"规程·序列Ⅰ","version":"1.2.1","fetchedAt":"2026-11-18","counts":{"ops":143,"covs":26},"avatarCount":0,"iconCount":0},"covenants":[{"id":"c01","name":"炎","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3炎","body":"干员攻击力+23%+0.9*层数"},{"at":6,"label":"6炎","body":"战斗开始时，[炎]干员每次攻击时造成攻击力6%的随机元素损伤；全场敌人元素损伤恢复速度增加40%+0.3*层数"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c02","name":"萨尔贡","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3萨尔贡","body":"干员开启技能时，所有[萨尔贡]干员攻击速度+12(至多+300)，持续5+0.22*层数秒"},{"at":6,"label":"6萨尔贡","body":"[萨尔贡]干员每次开启技能时，在攻击范围内制造一个流沙地面。位于流沙地面上的敌人受到20%+0.025*层数(上限60%)的迟钝效果，每5秒造成一次5000+25*层数点法术伤害并束缚1秒；[萨尔贡]干员技能持续期间，攻击范围内的流沙地面使敌人的迟钝效果变为2倍，每秒受到800+4*层数点法术伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c03","name":"维多利亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3维多利亚","body":"携带装备的[维多利亚]干员伤害提升至125%+0.8*层数"},{"at":6,"label":"6维多利亚","body":"[维多利亚]干员每携带1件装备攻击力+40%，携带进阶装备改为+80%"}],"layerGates":[{"label":"每叠加25层","body":"获得一件带有随机特殊效果的维式重锤"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c04","name":"谢拉格","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3谢拉格","body":"干员伤害提升至125%，对寒冷和冻结敌人额外提升至135%+1*层数"},{"at":6,"label":"6谢拉格","body":"战斗开始时召唤可自主行动的雪山巨人，其攻击力和生命值随谢拉格层数提升而提升。雪山巨人将在巨人和雪山形态转换，雪山形态可以阻挡敌人并造成溅射伤害，雪山形态攻击被冻结的敌人时造成高额法术伤害并解除目标的冻结状态；巨人形态可以移动并对敌人造成远程溅射伤害"}],"layerGates":[{"label":"每叠加100层","body":"获得一件谢拉格不融冰"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c05","name":"阿戈尔","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3阿戈尔","body":"干员生命值+35%+1*层数；战斗开始时[阿戈尔]干员依次吞噬身前一格干员造成5000点物理伤害并获得其基础攻击力和阻挡数，并叠加等于被吞噬者等阶的盟约层数([阿戈尔]之间优先对更靠左和靠上的干员发起吞噬)"},{"at":6,"label":"6阿戈尔","body":"前3名[阿戈尔]干员首次被击倒时立刻复活"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c06","name":"叙拉古","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3叙拉古","body":"干员部署后攻击速度+25+0.8*层数，持续32+0.4*层数秒"},{"at":6,"label":"6叙拉古","body":"每次攻击时有30%概率为敌人随机附加一个异常状态，持续1+0.0018*层数秒；敌人存在2种或以上异常状态时，每秒对自身及周围一定范围内的敌人造成800+10*层数点真实伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c07","name":"卡西米尔","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3卡西米尔","body":"每次有干员部署时[卡西米尔]干员攻击力+20%(至多+50%+1*层数)，持续至战斗结束"},{"at":6,"label":"6卡西米尔","body":"[卡西米尔]地面干员被击倒时离场并召唤整备区最右侧[卡西米尔]干员加入战斗(不改变当前盟约的激活状态)；[卡西米尔]干员开启技能或部署后30秒内攻击时附带攻击力65%的真实伤害"}],"layerGates":[],"notes":[],"countRule":"bench-right","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c08","name":"乌萨斯","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3乌萨斯","body":"干员攻击力+35%+0.75*层数，生命值+10%+0.3*层数，[乌萨斯]干员击倒其他单位时为[乌萨斯]叠加2层临时层数"},{"at":6,"label":"6乌萨斯","body":"[乌萨斯]干员受到伤害的15%+0.05*层数(上限100%)转化为10秒的生命流失，当伤害来源被击倒时不再流失生命；阻挡敌人期间，敌人每秒受到相当于攻击力50%+0.25*层数的法术伤害；[乌萨斯]干员击倒其他单位时叠加的临时层数提升至4层"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c09","name":"伊比利亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3伊比利亚","body":"干员或炼金单元每次造成伤害时，使目标每秒受到11%+0.06*层数攻击力(至多叠加10次)的持续法术伤害，持续10秒"},{"at":6,"label":"6伊比利亚","body":"[伊比利亚]干员或炼金单元造成伤害时附带的持续法术伤害提升至2倍，并使目标移动速度-4%(至多-80%)，持续10秒；[伊比利亚]干员或炼金单元每次造成伤害时有20%概率弹射到周围一定范围内的敌人造成300%攻击力的法术伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c10","name":"莱塔尼亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3莱塔尼亚","body":"干员和召唤物攻击力+30%+1*层数，场上敌人被击倒时在附近召唤“一个小节”(场上最多存在10个)"},{"at":6,"label":"6莱塔尼亚","body":"召唤“一个小节”时30%+0.1*层数(上限100%)概率改为召唤“一个乐部”，在场时使[莱塔尼亚]干员攻速+20；场上[莱塔尼亚]召唤物上限提升至20；场上我方干员被击倒时会额外召唤“一个小节”"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c11","name":"精准","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2精准","body":"干员攻击力+10%+1.2*层数"},{"at":3,"label":"3精准","body":"生效范围变为[精准]干员和所有远程干员，且攻击无视30%防御力和法术抗性"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c12","name":"迅捷","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2迅捷","body":"干员技能结束时有20%+0.35*层数(上限100%)概率立刻回复12点技力"}],"layerGates":[{"label":"40层","body":"所有干员技能结束时有等概率额外回复15点技力"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c13","name":"灵巧","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2灵巧","body":"干员及周围4格的干员攻击速度+10+1*层数"}],"layerGates":[{"label":"40层","body":"生效范围变为[灵巧]干员周围8格"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c14","name":"坚守","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2坚守","body":"所有干员生命值+25%+1.2*层数"},{"at":3,"label":"3坚守","body":"场上非[坚守]干员受到伤害时，所受伤害的40%由[坚守]干员平均承担；[坚守]干员受到伤害时，伤害来源受到850+10*层数点法术伤害(每0.2秒至多触发1次)和持续5秒的40%的脆弱效果"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c15","name":"助力","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2助力","body":"所有干员防御力+15%+1.2*层数，再部署时间-30%；休整期结束时，使当前所有已激活的盟约层数+2"},{"at":3,"label":"3助力","body":"改为层数+4"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c16","name":"远见","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2远见","body":"每叠加10层，获得一次2资金"}],"layerGates":[{"label":"首次到达80层","body":"所有[远见]干员购买价格永久-1资金"},{"label":"首次到达150层","body":"所有[远见]干员购买价格额外永久-1资金"}],"notes":["整备区的[远见]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c17","name":"奇迹","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2奇迹","body":"刷新调度中心时，有18%+0.25*层数(上限100%)概率使下次刷新不消耗资金"}],"layerGates":[{"label":"首次到达100层","body":"调度中心刷新时至少出现一名等同于当前调度中心等级的干员"}],"notes":["整备区的[奇迹]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c18","name":"投资人","kind":"附加","thresholds":[3],"tiers":[{"at":3,"label":"3投资人","body":"干员的“获得时”类特质每次触发2次"}],"layerGates":[{"label":"100层","body":"“获得时”类特质每次触发3次"}],"notes":["整备区的[投资人]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c19","name":"突袭","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2突袭","body":"干员10秒内未进行攻击或技能就绪时，若范围内没有敌人，则保留技力立即再部署至一名地面敌人周围，期间攻击力和生命值+25%+1*层数"}],"layerGates":[{"label":"50层","body":"所有干员攻击速度+50"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c20","name":"不屈","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2不屈","body":"地面干员被击倒时，有18%+0.4*层数(上限100%)概率立刻重新部署"},{"at":3,"label":"3不屈","body":"地面干员被击倒时使场上所有干员技力+5"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c21","name":"调和","kind":"附加","thresholds":[1],"tiers":[{"at":1,"label":"1调和","body":"激活时可以使场上核心盟约的激活人数+1，[调和]干员享受已激活的核心盟约的效果"}],"layerGates":[],"notes":[],"countRule":"harmony","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c22","name":"协防干员","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2协防干员","body":"所有干员受到的物理和法术伤害-20%；[协防干员]伤害提升至120%，精锐[协防干员]造成伤害提升至140%"}],"layerGates":[],"notes":[],"countRule":"fallback","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c23","name":"独行","kind":"附加","thresholds":[1],"tiers":[{"at":1,"label":"1独行","body":"干员攻击力和生命值+60%，初始技力+15(在场2名及以上[独行]干员时失效)"}],"layerGates":[],"notes":[],"countRule":"solo","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c24","name":"绝技","kind":"附加","thresholds":[2,5],"tiers":[{"at":2,"label":"2精锐","body":"精锐状态的干员攻击力+30%"},{"at":5,"label":"5精锐","body":"精锐状态的干员技力消耗-30%"}],"layerGates":[],"notes":[],"countRule":"elite","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c25","name":"聚合","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2聚合","body":"干员攻击范围内的我方单位每秒回复攻击力16%+0.12*层数的生命值和攻击力8%+0.06*层数的元素损伤"},{"at":3,"label":"3聚合","body":"[聚合]干员攻击范围内的所有干员获得15%+0.08*层数的庇护"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c26","name":"奥术","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2奥术","body":"干员造成伤害时额外附加一次20%+0.4*层数攻击力的法术伤害"},{"at":3,"label":"3奥术","body":"场上所有敌人每次受到伤害时法术抗性-1(累计降幅上限为30+0.05*层数点，最多降低100点)；[奥术]干员攻击范围内的敌人隐匿效果失效"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"}],"operators":[{"name":"折桠","tier":"Ⅰ","tierNum":1,"covs":["乌萨斯","不屈"],"traitType":"持续叠加","trait1":"<进入休整期时>转化2层【乌萨斯】临时层数为固定层数","trait2":"<进入休整期时>转化4层【乌萨斯】临时层数为固定层数"},{"name":"艾丝黛尔","tier":"Ⅰ","tierNum":1,"covs":["萨尔贡","独行"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】层数+1（每回合至多叠加2层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】层数+2（每回合至多叠加4层）"},{"name":"幽灵鲨","tier":"Ⅰ","tierNum":1,"covs":["阿戈尔"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【阿戈尔】层数+1（每回合至多叠加1层）","trait2":"<战斗中>部署时使已激活的【阿戈尔】层数+2（每回合至多叠加2层）"},{"name":"野鬃","tier":"Ⅰ","tierNum":1,"covs":["卡西米尔","助力"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【卡西米尔】层数+1（每回合至多叠加2层）","trait2":"<战斗中>部署时使已激活的【卡西米尔】层数+2（每回合至多叠加4层）"},{"name":"慕斯","tier":"Ⅰ","tierNum":1,"covs":["维多利亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【维多利亚】层数+1","trait2":"<休整期结束时>使已激活的【维多利亚】层数+2"},{"name":"角峰","tier":"Ⅰ","tierNum":1,"covs":["谢拉格","坚守"],"traitType":"作战能力","trait1":"<战斗中>对每名敌人首次造成伤害时使目标陷入2秒寒冷","trait2":"<战斗中>对每名敌人首次造成伤害时使目标陷入4秒寒冷"},{"name":"灰喉","tier":"Ⅰ","tierNum":1,"covs":["精准"],"traitType":"单次叠加","trait1":"<获得时>【精准】层数+2","trait2":"<获得时>【精准】层数+4"},{"name":"深靛","tier":"Ⅰ","tierNum":1,"covs":["伊比利亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】层数+2","trait2":"<休整期结束时>使已激活的【伊比利亚】层数+4"},{"name":"卡达","tier":"Ⅰ","tierNum":1,"covs":["奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【奥术】层数+1","trait2":"<休整期结束时>使已激活的【奥术】层数+2"},{"name":"摆渡人","tier":"Ⅰ","tierNum":1,"covs":["坚守","不屈"],"traitType":"单次叠加","trait1":"<获得时>【坚守】【不屈】层数+1","trait2":"<获得时>【坚守】【不屈】层数+2"},{"name":"夏栎","tier":"Ⅰ","tierNum":1,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使当前已激活且层数最多的盟约层数+1（此干员在整备区也生效）","trait2":"<休整期结束时>使当前已激活且层数最多的盟约层数+2（此干员在整备区也生效）"},{"name":"杰克","tier":"Ⅰ","tierNum":1,"covs":["突袭"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"霜叶","tier":"Ⅰ","tierNum":1,"covs":["灵巧"],"traitType":"单次叠加","trait1":"<获得时>【灵巧】层数+2","trait2":"<获得时>【灵巧】层数+4"},{"name":"拜松","tier":"Ⅰ","tierNum":1,"covs":["炎"],"traitType":"单次叠加","trait1":"<获得时>【炎】层数+2","trait2":"<获得时>【炎】层数+4"},{"name":"褐果","tier":"Ⅰ","tierNum":1,"covs":["聚合"],"traitType":"单次叠加","trait1":"<获得时>【聚合】层数+2","trait2":"<获得时>【聚合】层数+4"},{"name":"烈夏","tier":"Ⅰ","tierNum":1,"covs":["乌萨斯"],"traitType":"持续叠加","trait1":"<战斗开始时>使已激活的【乌萨斯】临时层数+4","trait2":"<战斗开始时>使已激活的【乌萨斯】临时层数+8"},{"name":"陨星","tier":"Ⅰ","tierNum":1,"covs":["迅捷"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【迅捷】层数+1（每回合至多叠加2层）","trait2":"<战斗中>每次开启技能时使已激活的【迅捷】层数+2（每回合至多叠加4层）"},{"name":"拉普兰德","tier":"Ⅰ","tierNum":1,"covs":["叙拉古"],"traitType":"单次叠加","trait1":"<获得时>【叙拉古】层数+2","trait2":"<获得时>【叙拉古】层数+4"},{"name":"地灵","tier":"Ⅰ","tierNum":1,"covs":["莱塔尼亚","独行"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】层数+1（每回合至多叠加1层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】层数+2（每回合至多叠加2层）"},{"name":"折光","tier":"Ⅱ","tierNum":2,"covs":["莱塔尼亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【莱塔尼亚】层数+4","trait2":"<休整期结束时>使已激活的【莱塔尼亚】层数+8"},{"name":"蓝毒","tier":"Ⅱ","tierNum":2,"covs":["伊比利亚"],"traitType":"作战能力","trait1":"<战斗中>【伊比利亚】每叠加2层，本干员攻击力+1%","trait2":"<战斗中>【伊比利亚】每叠加1层，本干员攻击力+1%"},{"name":"泡泡","tier":"Ⅱ","tierNum":2,"covs":["萨尔贡","坚守"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】【坚守】层数+2（每回合至多叠加4层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】【坚守】层数+4（每回合至多叠加8层）"},{"name":"莎草","tier":"Ⅱ","tierNum":2,"covs":["萨尔贡","聚合"],"traitType":"作战能力","trait1":"<战斗中>每次开启技能时使身前一格干员回复2点技力","trait2":"<战斗中>每次开启技能时使身前一格干员回复4点技力"},{"name":"雪猎","tier":"Ⅱ","tierNum":2,"covs":["谢拉格","精准"],"traitType":"单次叠加","trait1":"<获得时>【谢拉格】【精准】层数+4","trait2":"<获得时>【谢拉格】【精准】层数+8"},{"name":"砾","tier":"Ⅱ","tierNum":2,"covs":["卡西米尔","不屈"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【卡西米尔】【不屈】层数+2（每场战斗至多叠加12层）","trait2":"<战斗中>部署时使已激活的【卡西米尔】【不屈】层数+4（每场战斗至多叠加24层）"},{"name":"复奏","tier":"Ⅱ","tierNum":2,"covs":["莱塔尼亚","叙拉古","奇迹"],"traitType":"持续叠加","trait1":"<刷新时>若为本回合首次主动刷新，使已激活的【莱塔尼亚】【叙拉古】层数+2（此干员在整备区也生效）","trait2":"<刷新时>若为本回合首次主动刷新，使已激活的【叙拉古】【莱塔尼亚】层数+4（此干员在整备区也生效）"},{"name":"奥斯塔","tier":"Ⅱ","tierNum":2,"covs":["叙拉古"],"traitType":"整备能力","trait1":"<获得时>获得一次免费刷新","trait2":"<获得时>获得两次免费刷新"},{"name":"Miss.Christine","tier":"Ⅱ","tierNum":2,"covs":["维多利亚","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【维多利亚】【奥术】层数+3","trait2":"<休整期结束时>使已激活的【维多利亚】【奥术】层数+6"},{"name":"哈洛德","tier":"Ⅱ","tierNum":2,"covs":["维多利亚","谢拉格"],"traitType":"作战能力","trait1":"<战斗中>【维多利亚】【谢拉格】每叠加5层，本干员攻击力+1%","trait2":"<战斗中>【维多利亚】【谢拉格】每叠加5层，本干员攻击力+2%"},{"name":"云迹","tier":"Ⅱ","tierNum":2,"covs":["灵巧","奇迹"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使自身已激活的盟约层数+3（每回合至多叠加6层）","trait2":"<战斗中>每次开启技能时使自身已激活的盟约层数+6（每回合至多叠加12层）"},{"name":"蛇屠箱","tier":"Ⅱ","tierNum":2,"covs":["坚守"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【坚守】层数+4","trait2":"<休整期结束时>使已激活的【坚守】层数+8"},{"name":"波登可","tier":"Ⅱ","tierNum":2,"covs":["聚合","迅捷"],"traitType":"整备能力","trait1":"<售出时>下回合额外获得1资金","trait2":"<售出时>下回合额外获得2资金"},{"name":"承曦格雷伊","tier":"Ⅱ","tierNum":2,"covs":["精准","灵巧"],"traitType":"整备能力","trait1":"<获得时>获得一件精准狙击镜","trait2":"<获得时>获得两件精准狙击镜"},{"name":"锡人","tier":"Ⅱ","tierNum":2,"covs":["投资人"],"traitType":"单次叠加","trait1":"<获得时>【投资人】层数+4","trait2":"<获得时>【投资人】层数+8"},{"name":"宴","tier":"Ⅱ","tierNum":2,"covs":["不屈"],"traitType":"单次叠加","trait1":"<获得时>【不屈】层数+4","trait2":"<获得时>【不屈】层数+8"},{"name":"渡桥","tier":"Ⅱ","tierNum":2,"covs":["远见"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身及身前一格干员已激活的盟约层数+2","trait2":"<休整期结束时>使自身及身前一格干员已激活的盟约层数+4"},{"name":"矩","tier":"Ⅱ","tierNum":2,"covs":["炎"],"traitType":"单次叠加","trait1":"<获得时>获得等同于当前调度中心等级的【炎】层数","trait2":"<获得时>获得等同于当前调度中心等级两倍的【炎】层数"},{"name":"星极","tier":"Ⅱ","tierNum":2,"covs":["奇迹"],"traitType":"作战能力","trait1":"只需两名本干员即可合成精锐","trait2":""},{"name":"瑰盐","tier":"Ⅱ","tierNum":2,"covs":["伊比利亚","聚合"],"traitType":"作战能力","trait1":"<战斗中>【伊比利亚】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【伊比利亚】每叠加3层，本干员攻击力+2%"},{"name":"真理","tier":"Ⅱ","tierNum":2,"covs":["乌萨斯"],"traitType":"整备能力","trait1":"购买价格为1","trait2":""},{"name":"铸铁","tier":"Ⅱ","tierNum":2,"covs":["突袭"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【突袭】层数+3","trait2":"<休整期结束时>使已激活的【突袭】层数+6"},{"name":"星源","tier":"Ⅱ","tierNum":2,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使当前已激活且层数最多的盟约层数+2（此干员在整备区也生效）","trait2":"<休整期结束时>使当前已激活且层数最多的盟约层数+4（此干员在整备区也生效）"},{"name":"安哲拉","tier":"Ⅱ","tierNum":2,"covs":["阿戈尔","助力"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人或我方干员使已激活的【阿戈尔】【助力】层数+3（每回合至多叠加9层）","trait2":"<战斗中>每击倒一名敌人或我方干员使已激活的【阿戈尔】【助力】层数+6（每回合至多叠加18层）"},{"name":"车尔尼","tier":"Ⅲ","tierNum":3,"covs":["莱塔尼亚","坚守"],"traitType":"整备能力","trait1":"<获得时>获得一件“莱塔尼亚小鼓”","trait2":"<获得时>获得两件“莱塔尼亚小鼓”"},{"name":"卡涅利安","tier":"Ⅲ","tierNum":3,"covs":["莱塔尼亚","萨尔贡","迅捷"],"traitType":"整备能力","trait1":"<获得时>获得一件“迅捷作战粮”","trait2":"<获得时>获得两件“迅捷作战粮”"},{"name":"乌啾","tier":"Ⅲ","tierNum":3,"covs":["乌萨斯","聚合"],"traitType":"持续叠加","trait1":"<进入休整期时>场上每有一名【乌萨斯】干员，转化1层【乌萨斯】临时层数为固定层数","trait2":"<进入休整期时>场上每有一名【乌萨斯】干员，转化2层【乌萨斯】临时层数为固定层数"},{"name":"海沫","tier":"Ⅲ","tierNum":3,"covs":["伊比利亚","不屈"],"traitType":"整备能力","trait1":"<休整期结束时>自身售出价格+1（自身售出价格至多为4）","trait2":"<休整期结束时>自身售出价格+2（自身售出价格至多为8）"},{"name":"旅骨","tier":"Ⅲ","tierNum":3,"covs":["伊比利亚","精准"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身及身前一格干员已激活的盟约叠加等同于其售出价格的层数","trait2":"<休整期结束时>使自身及身前一格干员已激活的盟约叠加等同于其售出价格2倍的层数"},{"name":"风絮","tier":"Ⅲ","tierNum":3,"covs":["炎","聚合"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【聚合】层数+2（每回合至多叠加16层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【聚合】层数+4（每回合至多叠加32层）"},{"name":"极光","tier":"Ⅲ","tierNum":3,"covs":["谢拉格"],"traitType":"单次叠加","trait1":"<获得时> 【谢拉格】层数+1（每次触发后升级，至多叠加12层）","trait2":""},{"name":"耶拉","tier":"Ⅲ","tierNum":3,"covs":["谢拉格","奇迹"],"traitType":"整备能力","trait1":"<获得时>获得一件“谢拉格不融冰”","trait2":"<获得时>获得两件“谢拉格不融冰”"},{"name":"初雪","tier":"Ⅲ","tierNum":3,"covs":["谢拉格","协防干员"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人进入冻结使已激活的【谢拉格】层数+1（每回合至多叠加16层）","trait2":"<战斗中>攻击范围内每有一名敌人进入冻结使已激活的【谢拉格】层数+2（每回合至多叠加32层）"},{"name":"深巡","tier":"Ⅲ","tierNum":3,"covs":["阿戈尔","坚守"],"traitType":"作战能力","trait1":"<战斗中>部署时【阿戈尔】盟约每叠加20层，使自身及周围四格的干员攻击速度+1，持续30秒","trait2":"<战斗中>部署时【阿戈尔】盟约每叠加10层，使自身及周围四格的干员攻击速度+1，持续30秒"},{"name":"斯卡蒂","tier":"Ⅲ","tierNum":3,"covs":["阿戈尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【阿戈尔】层数+4（每场战斗至多叠加8层）","trait2":"<战斗中>部署时使已激活的【阿戈尔】层数+8（每场战斗至多叠加16层）"},{"name":"瑕光","tier":"Ⅲ","tierNum":3,"covs":["卡西米尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使自身已激活的盟约层数+3（每场战斗至多叠加9层）","trait2":"<战斗中>部署时使自身已激活的盟约层数+6（每场战斗至多叠加18层）"},{"name":"忍冬","tier":"Ⅲ","tierNum":3,"covs":["叙拉古","迅捷"],"traitType":"整备能力","trait1":"<获得时> 获得1次免费刷新（触发2次后升级，至多获得3次免费刷新）","trait2":""},{"name":"伺夜","tier":"Ⅲ","tierNum":3,"covs":["叙拉古","精准"],"traitType":"持续叠加","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）；；每击倒一名敌人使已激活的【叙拉古】【精准】层数+2（每回合至多叠加8层）","trait2":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）；；每击倒一名敌人使已激活的【叙拉古】【精准】层数+4（每回合至多叠加16层）"},{"name":"水灯心","tier":"Ⅲ","tierNum":3,"covs":["维多利亚","独行","灵巧"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"空弦","tier":"Ⅲ","tierNum":3,"covs":["精准","远见"],"traitType":"持续叠加","trait1":"<进入休整期时>使自身及身前一格干员已激活的盟约层数+3","trait2":"<进入休整期时>使自身及身前一格干员已激活的盟约层数+6"},{"name":"吉星","tier":"Ⅲ","tierNum":3,"covs":["奇迹"],"traitType":"整备能力","trait1":"<售出时>进行一次I阶干员的免费特殊招募；本干员合成为精锐状态后，上述特殊招募变为V阶干员","trait2":"<售出时>进行一次V阶干员的免费特殊招募"},{"name":"伊桑","tier":"Ⅲ","tierNum":3,"covs":["奥术","突袭"],"traitType":"整备能力","trait1":"<售出时>随机获得一名当前人数最多盟约的干员（不高于当前调度中心等级；无法获得自身）","trait2":""},{"name":"罗比菈塔","tier":"Ⅲ","tierNum":3,"covs":["坚守","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>同一行每有1名干员，使已激活的【坚守】【助力】层数+2","trait2":"<休整期结束时>同一行每有1名干员，使已激活的【坚守】【助力】层数+4"},{"name":"乌有","tier":"Ⅲ","tierNum":3,"covs":["炎"],"traitType":"整备能力","trait1":"<获得时>获得一枚“盟约之币”","trait2":"<获得时>获得两枚“盟约之币”"},{"name":"历阵锐枪芬","tier":"Ⅲ","tierNum":3,"covs":["卡西米尔","远见"],"traitType":"作战能力","trait1":"<战斗中>被击倒时召唤整备区的一名【卡西米尔】干员（优先选择最右侧）上场，并使整备区干员的当前再部署时间-30%","trait2":"<战斗中>被击倒时召唤整备区的一名【卡西米尔】干员（优先选择最右侧）上场，并使整备区干员的当前再部署时间-60%"},{"name":"凯瑟琳","tier":"Ⅲ","tierNum":3,"covs":["维多利亚","远见"],"traitType":"整备能力","trait1":"<获得时>获得一件维式重锤，小概率获得特殊维式重锤","trait2":"<获得时>获得一件特殊维式重锤，小概率获得终极维式重锤"},{"name":"盟约·辅助干员","tier":"Ⅲ","tierNum":3,"covs":["调和"],"traitType":"作战能力","trait1":"<战斗中>攻击力和生命上限+20%","trait2":"<战斗中>攻击力和生命上限+40%"},{"name":"风丸","tier":"Ⅲ","tierNum":3,"covs":["不屈"],"traitType":"持续叠加","trait1":"<战斗中>自身被击倒或与傀儡发生替换时使已激活的【不屈】层数+2（每回合至多叠加10层）","trait2":"<战斗中>自身被击倒或与傀儡发生替换时使已激活的【不屈】层数+4（每回合至多叠加20层）"},{"name":"至简","tier":"Ⅲ","tierNum":3,"covs":["萨尔贡"],"traitType":"整备能力","trait1":"购买价格为1","trait2":""},{"name":"奥尔佳","tier":"Ⅲ","tierNum":3,"covs":["乌萨斯","灵巧"],"traitType":"整备能力","trait1":"<获得时>获得一件乌萨斯呼吸器","trait2":"<获得时>获得两件乌萨斯呼吸器"},{"name":"青枳","tier":"Ⅲ","tierNum":3,"covs":["坚守","迅捷"],"traitType":"持续叠加","trait1":"<进入休整期时>使自身及身后一格干员已激活的盟约层数+3","trait2":"<进入休整期时>使自身及身后一格干员已激活的盟约层数+6"},{"name":"黑键","tier":"Ⅳ","tierNum":4,"covs":["莱塔尼亚","精准"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【精准】层数+1（每回合至多叠加8层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【精准】层数+2（每回合至多叠加16层）"},{"name":"艾雅法拉","tier":"Ⅳ","tierNum":4,"covs":["莱塔尼亚","奥术"],"traitType":"作战能力","trait1":"<战斗中>【莱塔尼亚】【奥术】每叠加2层，本干员技力自然回复速度+0.02/秒，攻击力+1%","trait2":"<战斗中>【莱塔尼亚】【奥术】每叠加1层，本干员技力自然回复速度+0.02/秒，攻击力+1%"},{"name":"赫拉格","tier":"Ⅳ","tierNum":4,"covs":["乌萨斯","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【乌萨斯】【突袭】层数+4（每场战斗至多叠加12层）","trait2":"<战斗中>部署时使已激活的【乌萨斯】【突袭】层数+8（每场战斗至多叠加24层）"},{"name":"维伊","tier":"Ⅳ","tierNum":4,"covs":["乌萨斯","奥术"],"traitType":"作战能力","trait1":"<战斗中>【乌萨斯】每叠加2层，本干员攻击速度+1","trait2":"<战斗中>【乌萨斯】每叠加1层，本干员攻击速度+1"},{"name":"温蒂","tier":"Ⅳ","tierNum":4,"covs":["伊比利亚","坚守"],"traitType":"整备能力","trait1":"售出价格为3","trait2":"售出价格为6"},{"name":"流明","tier":"Ⅳ","tierNum":4,"covs":["伊比利亚","聚合"],"traitType":"持续叠加","trait1":"<战斗结束时>每有一名存活的我方干员，使已激活的【伊比利亚】【聚合】层数+1","trait2":"<战斗结束时>每有一名存活的我方干员，使已激活的【伊比利亚】【聚合】层数+2"},{"name":"余","tier":"Ⅳ","tierNum":4,"covs":["炎","坚守"],"traitType":"持续叠加","trait1":"<战斗中>周围八格每有一名敌人触发元素损伤爆发使自身已激活的盟约层数+1（每回合至多叠加8层）","trait2":"<战斗中>周围八格每有一名敌人触发元素损伤爆发使自身已激活的盟约层数+2（每回合至多叠加16层）"},{"name":"森蚺","tier":"Ⅳ","tierNum":4,"covs":["萨尔贡","不屈"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【萨尔贡】【不屈】盟约层数+4（每回合至多叠加12层）","trait2":"<战斗中>部署时使已激活的【萨尔贡】【不屈】盟约层数+8（每回合至多叠加24层）"},{"name":"灵知","tier":"Ⅳ","tierNum":4,"covs":["谢拉格","迅捷"],"traitType":"整备能力","trait1":"<获得时>获得一次特殊刷新，下次刷新至少出现一名谢拉格干员","trait2":"<获得时>获得一次特殊刷新，下次刷新至少出现两名谢拉格干员"},{"name":"归溟幽灵鲨","tier":"Ⅳ","tierNum":4,"covs":["阿戈尔","不屈"],"traitType":"作战能力","trait1":"<战斗中>自身被击倒或与替身发生替换时使周围八格的【阿戈尔】干员回复5点技力","trait2":"<战斗中>自身被击倒或与替身发生替换时使周围八格的【阿戈尔】干员回复10点技力"},{"name":"水月","tier":"Ⅳ","tierNum":4,"covs":["阿戈尔","灵巧"],"traitType":"作战能力","trait1":"<战斗中>【阿戈尔】盟约每叠加20层，自身及周围四格干员每次造成伤害时使目标移动速度-1%，持续3秒","trait2":"<战斗中>【阿戈尔】盟约每叠加10层，自身及周围四格干员每次造成伤害时使目标移动速度-1%，持续3秒"},{"name":"远牙","tier":"Ⅳ","tierNum":4,"covs":["卡西米尔","精准"],"traitType":"作战能力","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使攻击范围内及整备区中的干员再部署时间-3秒","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使攻击范围内及整备区中的干员再部署时间-6秒"},{"name":"玛恩纳","tier":"Ⅳ","tierNum":4,"covs":["卡西米尔"],"traitType":"作战能力","trait1":"<战斗中>【卡西米尔】每叠加5层，本干员部署后100秒内基础攻击力+10、基础生命上限+50","trait2":"<战斗中>【卡西米尔】每叠加5层，本干员部署后100秒内基础攻击力+20、基础生命上限+100"},{"name":"涤火杰西卡","tier":"Ⅳ","tierNum":4,"covs":["维多利亚","坚守"],"traitType":"持续叠加","trait1":"<休整期结束时>场上每有一名携带装备的干员，使已激活的【维多利亚】【坚守】层数+2","trait2":"<休整期结束时>场上每有一名携带装备的干员，使已激活的【维多利亚】【坚守】层数+4"},{"name":"白铁","tier":"Ⅳ","tierNum":4,"covs":["维多利亚","助力"],"traitType":"整备能力","trait1":"<进入休整期时>使自身携带的装备变为精锐版本","trait2":""},{"name":"斥罪","tier":"Ⅳ","tierNum":4,"covs":["叙拉古","不屈"],"traitType":"作战能力","trait1":"<战斗中>【叙拉古】【不屈】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【叙拉古】【不屈】每叠加3层，本干员攻击力+2%"},{"name":"W","tier":"Ⅳ","tierNum":4,"covs":["迅捷"],"traitType":"作战能力","trait1":"<战斗中>【迅捷】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【迅捷】每叠加3层，本干员攻击力+2%"},{"name":"霍尔海雅","tier":"Ⅳ","tierNum":4,"covs":["奥术","精准"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使自身已激活的盟约层数+4（每场战斗至多叠加12层）","trait2":"<战斗中>每次开启技能时使自身已激活的盟约层数+8（每场战斗至多叠加24层）"},{"name":"山","tier":"Ⅳ","tierNum":4,"covs":["投资人"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"淬羽赫默","tier":"Ⅳ","tierNum":4,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使整备区每名干员已激活的盟约层数+1","trait2":"<休整期结束时>使整备区每名干员已激活的盟约层数+2"},{"name":"赫德雷","tier":"Ⅳ","tierNum":4,"covs":["突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【突袭】层数+4（每回合至多叠加16层）","trait2":"<战斗中>部署时使已激活的【突袭】层数+8（每回合至多叠加32层）"},{"name":"夜莺","tier":"Ⅳ","tierNum":4,"covs":["聚合","协防干员"],"traitType":"持续叠加","trait1":"<战斗结束时>每有一名存活的我方干员，使自身已激活的盟约层数+1","trait2":"<战斗结束时>每有一名存活的我方干员，使自身已激活的盟约层数+2"},{"name":"仇白","tier":"Ⅳ","tierNum":4,"covs":["炎","灵巧"],"traitType":"单次叠加","trait1":"<获得时>【炎】【灵巧】层数+6","trait2":"<获得时>【炎】【灵巧】层数+12"},{"name":"异客","tier":"Ⅳ","tierNum":4,"covs":["萨尔贡","奥术"],"traitType":"整备能力","trait1":"<进入休整期时>获得1件“盟约之币”或“萨尔贡浓茶”，有小概率发现“拟态物质”","trait2":"<进入休整期时>获得2件“盟约之币”或“萨尔贡浓茶”，有小概率发现“拟态物质”"},{"name":"安洁莉娜","tier":"Ⅳ","tierNum":4,"covs":["叙拉古","奇迹"],"traitType":"持续叠加","trait1":"<休整期结束时>本回合每进行过1次刷新，使已激活的【叙拉古】层数+2（每回合至多叠加8层），【奇迹】层数+1（每回合至多叠加4层）","trait2":"<休整期结束时>本回合每进行过1次刷新，使已激活的【叙拉古】层数+4（每回合至多叠加16层），【奇迹】层数+2（每回合至多叠加8层）"},{"name":"华法琳","tier":"Ⅳ","tierNum":4,"covs":["灵巧","聚合"],"traitType":"持续叠加","trait1":"<战斗开始时>使身前一格干员获得特质“<开启技能时>使自身已激活的盟约层数+1（每回合至多叠加7层）”","trait2":"<战斗开始时>使身前一格干员获得特质“<开启技能时>使自身已激活的盟约层数+2（每回合至多叠加14层）”"},{"name":"寒檀","tier":"Ⅳ","tierNum":4,"covs":["远见"],"traitType":"持续叠加","trait1":"<休整期结束时><休整期开始时>使已激活的【远见】层数+3","trait2":"<休整期结束时><休整期开始时>使已激活的【远见】层数+6"},{"name":"纯烬艾雅法拉","tier":"Ⅴ","tierNum":5,"covs":["聚合","莱塔尼亚","远见"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【聚合】层数+2（每场战斗至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【聚合】层数+4（每场战斗至多叠加40层）"},{"name":"怒潮凛冬","tier":"Ⅴ","tierNum":5,"covs":["乌萨斯","奇迹"],"traitType":"作战能力","trait1":"<战斗中>【乌萨斯】【奇迹】每叠加10层，本干员技力自然回复速度+0.1/秒，攻击力+1%","trait2":"<战斗中>【乌萨斯】【奇迹】每叠加10层，本干员技力自然回复速度+0.2/秒，攻击力+2%"},{"name":"艾丽妮","tier":"Ⅴ","tierNum":5,"covs":["伊比利亚"],"traitType":"作战能力","trait1":"<战斗中>周围12格每有一名敌人被击倒自身回复3点技力","trait2":"<战斗中>周围12格每有一名敌人被击倒自身回复6点技力"},{"name":"棘刺","tier":"Ⅴ","tierNum":5,"covs":["伊比利亚","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】叠加等同于场上所有干员售出价格的层数（每回合至多叠加12层）","trait2":"<休整期结束时>使已激活的【伊比利亚】叠加等同于场上所有干员售出价格2倍的层数（每回合至多叠加24层）"},{"name":"黍","tier":"Ⅴ","tierNum":5,"covs":["炎","远见"],"traitType":"单次叠加","trait1":"<获得时>【炎】层数+8，【远见】层数+4","trait2":"<获得时>【炎】层数+16，【远见】层数+8"},{"name":"佩佩","tier":"Ⅴ","tierNum":5,"covs":["萨尔贡","灵巧"],"traitType":"持续叠加","trait1":"<战斗中>周围八格每有一名敌人或干员进入沉睡或眩晕时使自身及身后一格干员已激活的盟约层数+1（每回合至多叠加9层）","trait2":"<战斗中>周围八格每有一名敌人或干员进入沉睡或眩晕时使自身及身后一格干员已激活的盟约层数+2（每回合至多叠加18层）"},{"name":"圣聆初雪","tier":"Ⅴ","tierNum":5,"covs":["谢拉格","奥术"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人陷入冻结自身回复1点技力，并使已激活的【谢拉格】层数+1（每回合至多叠加24层）","trait2":"<战斗中>攻击范围内每有一名敌人冻结自身回复2点技力，并使已激活的【谢拉格】层数+2（每回合至多叠加48层）"},{"name":"凛御银灰","tier":"Ⅴ","tierNum":5,"covs":["谢拉格","灵巧","投资人"],"traitType":"持续叠加","trait1":"<战斗中>身前一格【谢拉格】【灵巧】干员每场战斗的叠层上限+75%","trait2":"<战斗中>身前一格【谢拉格】【灵巧】干员每场战斗的叠层上限+150%"},{"name":"歌蕾蒂娅","tier":"Ⅴ","tierNum":5,"covs":["阿戈尔"],"traitType":"整备能力","trait1":"<进入休整期时>若同一行有3名干员，获得1个幽灵鲨、安哲拉、深巡或斯卡蒂","trait2":"<进入休整期时>获得1个幽灵鲨、安哲拉、深巡或斯卡蒂"},{"name":"乌尔比安","tier":"Ⅴ","tierNum":5,"covs":["阿戈尔"],"traitType":"作战能力","trait1":"<战斗中>部署时【阿戈尔】盟约每叠加20层，使自身及周围四格的干员攻击力+1%，持续30秒","trait2":"<战斗中>部署时【阿戈尔】盟约每叠加10层，使自身及周围四格的干员攻击力+1%，持续30秒"},{"name":"薇薇安娜","tier":"Ⅴ","tierNum":5,"covs":["莱塔尼亚","卡西米尔","奥术"],"traitType":"持续叠加","trait1":"<战斗中>场上其他与自身拥有相同盟约的干员在本回合战斗期的叠层上限+7","trait2":"<战斗中>场上其他与自身拥有相同盟约的干员在本回合战斗期的叠层上限+14"},{"name":"铃兰","tier":"Ⅴ","tierNum":5,"covs":["叙拉古"],"traitType":"特异化","trait1":"<进入休整期时>触发身前一格的其他干员的“获得时”类效果","trait2":"<进入休整期时>触发身前两格的其他干员的“获得时”类效果"},{"name":"贝洛内","tier":"Ⅴ","tierNum":5,"covs":["叙拉古","突袭"],"traitType":"作战能力","trait1":"<战斗中>【叙拉古】【突袭】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【叙拉古】【突袭】每叠加3层，本干员攻击力+2%"},{"name":"维娜·维多利亚","tier":"Ⅴ","tierNum":5,"covs":["维多利亚","奇迹"],"traitType":"持续叠加","trait1":"<休整期结束时>场上每有一名不同阶的【维多利亚】干员，使已激活的【维多利亚】【奇迹】层数+2","trait2":"<休整期结束时>场上每有一名不同阶的【维多利亚】干员，使已激活的【维多利亚】【奇迹】层数+4"},{"name":"迷迭香","tier":"Ⅴ","tierNum":5,"covs":["精准","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【精准】【助力】层数+10","trait2":"<休整期结束时>使已激活的【精准】【助力】层数+20"},{"name":"隐德来希","tier":"Ⅴ","tierNum":5,"covs":["灵巧","不屈"],"traitType":"作战能力","trait1":"<战斗中>【灵巧】【不屈】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【灵巧】【不屈】每叠加3层，本干员攻击力+2%"},{"name":"塞雷娅","tier":"Ⅴ","tierNum":5,"covs":["坚守","协防干员"],"traitType":"特异化","trait1":"身前一格干员若为“休整期结束时”特质，本干员的特质与其相同","trait2":""},{"name":"溯光星源","tier":"Ⅴ","tierNum":5,"covs":["奥术"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每消耗3资金，使已激活的【奥术】层数+2（每回合至多叠加18层）","trait2":"<休整期结束时> 本回合每消耗3资金，使已激活的【奥术】层数+4（每回合至多叠加36层）"},{"name":"老鲤","tier":"Ⅴ","tierNum":5,"covs":["投资人","炎"],"traitType":"作战能力","trait1":"<战斗中>【炎】【投资人】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【炎】【投资人】每叠加3层，本干员攻击力+2%"},{"name":"Mon3tr","tier":"Ⅴ","tierNum":5,"covs":["协防干员"],"traitType":"持续叠加","trait1":"<战斗中>周围八格干员每场战斗的叠层上限+30%","trait2":"<战斗中>周围八格干员每场战斗的叠层上限+60%"},{"name":"可露希尔","tier":"Ⅴ","tierNum":5,"covs":["投资人"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【投资人】层数+2（每回合至多叠加16层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【投资人】层数+4（每回合至多叠加32层）"},{"name":"“暴躁铁皮”","tier":"Ⅴ","tierNum":5,"covs":["协防干员"],"traitType":"作战能力","trait1":"<战斗中>攻击力和生命上限+60%","trait2":"<战斗中>攻击力和生命上限+120%"},{"name":"鸿雪","tier":"Ⅴ","tierNum":5,"covs":["萨尔贡","精准"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】【精准】层数+4（每回合至多叠加16层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】【精准】层数+8（每回合至多叠加32层）"},{"name":"焰尾","tier":"Ⅴ","tierNum":5,"covs":["卡西米尔","迅捷"],"traitType":"持续叠加","trait1":"<休整期结束时>整备区每有一名干员，使已激活的【卡西米尔】【迅捷】层数+1","trait2":"<休整期结束时>整备区每有一名干员，使已激活的【卡西米尔】【迅捷】层数+2"},{"name":"冻河","tier":"Ⅴ","tierNum":5,"covs":["乌萨斯","迅捷"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【乌萨斯】【迅捷】层数+1（每场战斗至多叠加16层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【乌萨斯】【迅捷】层数+2（每场战斗至多叠加32层）"},{"name":"阿米娅","tier":"Ⅴ","tierNum":5,"covs":["奇迹"],"traitType":"持续叠加","trait1":"<战斗中>身前一格干员提升盟约层数时，每次提升的层数额外+1（不受叠层上限影响）","trait2":"<战斗中>身前一格干员提升盟约层数时，每次提升的层数额外+2（不受叠层上限影响）"},{"name":"引星棘刺","tier":"Ⅵ","tierNum":6,"covs":["伊比利亚","迅捷"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】【迅捷】层数+12","trait2":"<休整期结束时>使已激活的【伊比利亚】【迅捷】层数+24"},{"name":"烛煌","tier":"Ⅵ","tierNum":6,"covs":["炎","维多利亚","迅捷"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人触发元素损伤爆发使已激活的【炎】【维多利亚】层数+1（每回合至多叠加12层）","trait2":"<战斗中>攻击范围内每有一名敌人触发元素损伤爆发使已激活的【炎】【维多利亚】层数+2（每回合至多叠加24层）"},{"name":"浊心斯卡蒂","tier":"Ⅵ","tierNum":6,"covs":["阿戈尔","聚合"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名我方干员部署使已激活的【阿戈尔】层数+2（每场战斗至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名我方干员部署使已激活的【阿戈尔】层数+4（每场战斗至多叠加40层）"},{"name":"克莱门莎","tier":"Ⅵ","tierNum":6,"covs":["阿戈尔"],"traitType":"作战能力","trait1":"<战斗开始时>【阿戈尔】盟约每叠加20层，使场上所有敌人侵蚀损伤冷却恢复速度+1%","trait2":"<战斗开始时>【阿戈尔】盟约每叠加10层，使场上所有敌人侵蚀损伤冷却恢复速度+1%"},{"name":"耀骑士临光","tier":"Ⅵ","tierNum":6,"covs":["卡西米尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>被击倒时召唤整备区最右侧的【卡西米尔】【突袭】干员上场，并使自身及被召唤干员已激活的盟约层数+6（每名干员每回合至多叠加12层）","trait2":"<战斗中>被击倒时召唤整备区最右侧的【卡西米尔】【突袭】干员上场，并使自身及被召唤干员已激活的盟约层数+12（每名干员每回合至多叠加24层）"},{"name":"荒芜拉普兰德","tier":"Ⅵ","tierNum":6,"covs":["叙拉古"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人使已激活的【叙拉古】层数+2（每场战斗至多叠加20层）；（晋升为精锐状态时，使所有【叙拉古】干员获得此效果）","trait2":"<战斗中>所有【叙拉古】干员每击倒一名敌人使已激活的【叙拉古】层数+4（每场战斗至多叠加40层）"},{"name":"酒神","tier":"Ⅵ","tierNum":6,"covs":["维多利亚"],"traitType":"整备能力","trait1":"<进入休整期时>获得一件随机装备（不高于当前调度中心等级）","trait2":"<进入休整期时>获得两件随机装备（不高于当前调度中心等级）"},{"name":"逻各斯","tier":"Ⅵ","tierNum":6,"covs":["奥术","远见"],"traitType":"持续叠加","trait1":"<获得时>【奥术】层数+10，【远见】层数+5；<战斗中>【奥术】【远见】每叠加3层，本干员攻击速度+1","trait2":"<获得时>【奥术】层数+20，【远见】层数+10；<战斗中>【奥术】【远见】每叠加3层，本干员攻击速度+2"},{"name":"真言","tier":"Ⅵ","tierNum":6,"covs":["萨尔贡"],"traitType":"作战能力","trait1":"<战斗中>【萨尔贡】每叠加5层，本干员攻击力+1%","trait2":"<战斗中>【萨尔贡】每叠加5层，本干员攻击力+2%"},{"name":"妮芙","tier":"Ⅵ","tierNum":6,"covs":["迅捷","远见"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人陷入恐惧使已激活的【迅捷】层数+4（每回合至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名敌人陷入恐惧使已激活的【迅捷】层数+8（每回合至多叠加40层）"},{"name":"遥","tier":"Ⅵ","tierNum":6,"covs":["聚合","奇迹"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【聚合】【奇迹】层数+1（每回合至多叠加12层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【聚合】【奇迹】层数+2（每回合至多叠加24层）"},{"name":"魔王","tier":"Ⅵ","tierNum":6,"covs":["调和"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的核心盟约层数+10","trait2":"<休整期结束时>使已激活的核心盟约层数+20"},{"name":"史尔特尔","tier":"Ⅵ","tierNum":6,"covs":["突袭","不屈"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人使已激活的【突袭】【不屈】层数+4（每回合至多叠加16层）","trait2":"<战斗中>每击倒一名敌人使已激活的【突袭】【不屈】层数+8（每回合至多叠加32层）"},{"name":"锏","tier":"Ⅵ","tierNum":6,"covs":["卡西米尔","谢拉格","莱塔尼亚"],"traitType":"作战能力","trait1":"<战斗中>【卡西米尔】【谢拉格】【莱塔尼亚】每叠加6层，本干员技力自然回复速度+0.01/秒，生命上限+1%","trait2":"<战斗中>【卡西米尔】【谢拉格】【莱塔尼亚】每叠加3层，本干员技力自然回复速度+0.01/秒，生命上限+1%"},{"name":"机械师","tier":"Ⅵ","tierNum":6,"covs":["协防干员","坚守"],"traitType":"整备能力","trait1":"<进入休整期时>若同一行至少有三名干员，获得一名当前人数最多盟约的干员","trait2":"<进入休整期时>获得一名当前人数最多盟约的干员"},{"name":"塔露拉","tier":"Ⅵ","tierNum":6,"covs":["乌萨斯","奥术","协防干员"],"traitType":"持续叠加","trait1":"<战斗中>【乌萨斯】盟约获得强化：击倒单位时叠加的临时层数提升至4层；在场6名不同【乌萨斯】干员时，提升至6层","trait2":"<战斗中>【乌萨斯】盟约获得强化：击倒单位时叠加的临时层数提升至6层；在场6名不同【乌萨斯】干员时，提升至8层"},{"name":"夕","tier":"Ⅵ","tierNum":6,"covs":["炎","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【奥术】层数+2（每回合至多叠加24层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【奥术】层数+4（每回合至多叠加48层）"},{"name":"蕾缪安","tier":"Ⅵ","tierNum":6,"covs":["精准"],"traitType":"作战能力","trait1":"<战斗中>【精准】每叠加4层，本干员技力自然回复速度+0.01/秒","trait2":"<战斗中>【精准】每叠加2层，本干员技力自然回复速度+0.01/秒"},{"name":"缪尔赛思","tier":"Ⅵ","tierNum":6,"covs":["协防干员"],"traitType":"整备能力","trait1":"<获得时>获得一个“变形同构体”","trait2":"<获得时>获得两个“变形同构体”"},{"name":"帕拉斯","tier":"Ⅵ","tierNum":6,"covs":["灵巧","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身以及身前一格干员已激活的盟约层数+9","trait2":"<休整期结束时>使自身以及身前一格干员已激活的盟约层数+18"}],"avatars":{},"icons":{},"art":{"avatarIds":{"折桠":"char_4207_branch","艾丝黛尔":"char_127_estell","幽灵鲨":"char_143_ghost","野鬃":"char_496_wildmn","慕斯":"char_185_frncat","角峰":"char_199_yak","灰喉":"char_367_swllow","深靛":"char_469_indigo","卡达":"char_328_cammou","摆渡人":"char_4166_varkis","夏栎":"char_492_quercu","杰克":"char_347_jaksel","霜叶":"char_193_frostl","拜松":"char_325_bison","褐果":"char_4041_chnut","烈夏":"char_194_leto","陨星":"char_219_meteo","拉普兰德":"char_140_whitew","地灵":"char_183_skgoat","折光":"char_499_kaitou","蓝毒":"char_129_bluep","泡泡":"char_381_bubble","莎草":"char_4139_papyrs","雪猎":"char_4211_snhunt","砾":"char_237_gravel","复奏":"char_4031_liesel","奥斯塔":"char_346_aosta","Miss.Christine":"char_4198_christ","哈洛德":"char_4114_harold","云迹":"char_4165_ctrail","蛇屠箱":"char_150_snakek","波登可":"char_258_podego","承曦格雷伊":"char_1027_greyy2","锡人":"char_4151_tinman","宴":"char_337_utage","渡桥":"char_4147_mitm","矩":"char_4221_ju","星极":"char_274_astesi","瑰盐":"char_4163_rosesa","真理":"char_195_glassb","铸铁":"char_333_sidero","星源":"char_135_halo","安哲拉":"char_218_cuttle","车尔尼":"char_4047_pianst","卡涅利安":"char_426_billro","乌啾":"char_4224_turdus","海沫":"char_4066_highmo","旅骨":"char_4232_hbound","风絮":"char_4222_taraxa","极光":"char_422_aurora","耶拉":"char_4013_kjera","初雪":"char_174_slbell","深巡":"char_4137_udflow","斯卡蒂":"char_263_skadi","瑕光":"char_423_blemsh","忍冬":"char_4026_vulpis","伺夜":"char_427_vigil","水灯心":"char_4177_brigid","空弦":"char_332_archet","吉星":"char_4203_kichi","伊桑":"char_355_ethan","罗比菈塔":"char_484_robrta","乌有":"char_455_nothin","历阵锐枪芬":"char_1036_fang2","凯瑟琳":"char_4162_cathy","盟约·辅助干员":"char_616_pithst","风丸":"char_4016_kazema","至简":"char_4054_malist","奥尔佳":"char_4245_alga","青枳":"char_488_buildr","黑键":"char_4046_ebnhlz","艾雅法拉":"char_180_amgoat","赫拉格":"char_188_helage","维伊":"char_4226_veen","温蒂":"char_400_weedy","流明":"char_4042_lumen","余":"char_2026_yu","森蚺":"char_416_zumama","灵知":"char_206_gnosis","归溟幽灵鲨":"char_1023_ghost2","水月":"char_437_mizuki","远牙":"char_430_fartth","玛恩纳":"char_4064_mlynar","涤火杰西卡":"char_1034_jesca2","白铁":"char_4072_ironmn","斥罪":"char_4065_judge","W":"char_113_cqbw","霍尔海雅":"char_4027_heyak","山":"char_264_f12yin","淬羽赫默":"char_1031_slent2","赫德雷":"char_4088_hodrer","夜莺":"char_179_cgbird","仇白":"char_4082_qiubai","异客":"char_472_pasngr","安洁莉娜":"char_291_aglina","华法琳":"char_171_bldsk","寒檀":"char_341_sntlla","纯烬艾雅法拉":"char_1016_agoat2","怒潮凛冬":"char_1051_headb2","艾丽妮":"char_4009_irene","棘刺":"char_293_thorns","黍":"char_2025_shu","佩佩":"char_4058_pepe","圣聆初雪":"char_1046_sbell2","凛御银灰":"char_1045_svash2","歌蕾蒂娅":"char_474_glady","乌尔比安":"char_4145_ulpia","薇薇安娜":"char_4098_vvana","铃兰":"char_358_lisa","贝洛内":"char_4037_demetr","维娜·维多利亚":"char_1019_siege2","迷迭香":"char_391_rosmon","隐德来希":"char_4010_etlchi","塞雷娅":"char_202_demkni","溯光星源":"char_1047_halo2","老鲤":"char_322_lmlee","Mon3tr":"char_4179_monstr","可露希尔":"char_4228_closur","“暴躁铁皮”":"char_618_acrbot","鸿雪":"char_4055_bgsnow","焰尾":"char_420_flamtl","冻河":"char_4244_tocka","阿米娅":"char_002_amiya","引星棘刺":"char_1039_thorn2","烛煌":"char_1040_blaze2","浊心斯卡蒂":"char_1012_skadi2","克莱门莎":"char_4231_clemnt","耀骑士临光":"char_1014_nearl2","荒芜拉普兰德":"char_1038_whitw2","酒神":"char_1042_phatm2","逻各斯":"char_4133_logos","真言":"char_4204_mantra","妮芙":"char_4146_nymph","遥":"char_4202_haruka","魔王":"char_4134_cetsyr","史尔特尔":"char_350_surtr","锏":"char_4116_blkkgt","机械师":"char_4230_mcnist","塔露拉":"char_4247_oxi","夕":"char_2015_dusk","蕾缪安":"char_4193_lemuen","缪尔赛思":"char_249_mlyss","帕拉斯":"char_485_pallas"},"bases":["https://cdn.jsdelivr.net/gh/yuanyan3060/ArknightsGameResource@main/avatar/","https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/"]}};</script>
+<script>/* 卫戍协议·配队模拟器 — 规则内核（纯函数，浏览器/Node 通用）
+ * 术语一律使用官方用语：干员 / 盟约 / 变形同构体。
+ * 数据来自 PRTS《卫戍协议·规程/PRTS盟约记录》与 NGA 解包整理。
+ */
+(function (global) {
+  'use strict';
+
+  var TIER_NAMES = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ'];
+
+  function uniq(arr) {
+    var seen = Object.create(null), out = [];
+    (arr || []).forEach(function (x) { if (x != null && x !== '' && !seen[x]) { seen[x] = 1; out.push(x); } });
+    return out;
+  }
+
+  function makeCore(data) {
+    var covenants = data.covenants.slice();
+    var operators = data.operators.slice();
+    var covByName = Object.create(null);
+    covenants.forEach(function (c) { covByName[c.name] = c; });
+    var opByName = Object.create(null);
+    operators.forEach(function (o) { opByName[o.name] = o; });
+
+    var CORE_COVS = covenants.filter(function (c) { return c.kind === '核心'; }).map(function (c) { return c.name; });
+
+    /* ---------- 特质解析：把「层数+N（每回合至多M层）」变成可计算的数据 ---------- */
+    var RE_GAIN = /((?:【[^】]+】)+)\s*层数\+(\d+)(?:\s*（每回合至多叠加(\d+)层）)?/g;
+    var RE_CONVERT = /转化(\d+)层【([^】]+)】临时层数为固定层数/;
+
+    function parseTrait(text, op) {
+      var out = { gains: [], convert: null, raw: text || '' };
+      if (!text) return out;
+      var m;
+      RE_GAIN.lastIndex = 0;
+      while ((m = RE_GAIN.exec(text))) {
+        var covs = (m[1].match(/【([^】]+)】/g) || []).map(function (s) { return s.slice(1, -1); });
+        var n = parseInt(m[2], 10);
+        var cap = m[3] ? parseInt(m[3], 10) : null;
+        covs.forEach(function (cov) {
+          if (!covByName[cov]) return;
+          out.gains.push({ cov: cov, amount: n, perRoundCap: cap, oneShot: /获得时|首次/.test(text) });
+        });
+      }
+      var c = text.match(RE_CONVERT);
+      if (c) out.convert = { amount: parseInt(c[1], 10), cov: c[2] };
+      return out;
+    }
+
+    operators.forEach(function (op) {
+      op.traitParsed = {
+        1: parseTrait(op.trait1, op),
+        2: parseTrait(op.trait2 || op.trait1, op)
+      };
+    });
+
+    function traitFor(op, elite) { return op.traitParsed[elite && op.trait2 ? 2 : 1]; }
+
+    /* ---------- 核心计算 ---------- */
+    function compute(input) {
+      input = input || {};
+      var field = uniq(input.field).map(function (n) { return opByName[n]; }).filter(Boolean);
+      var bench = uniq(input.bench).map(function (n) { return opByName[n]; }).filter(Boolean);
+      var elite = Object.create(null);
+      (input.elite || []).forEach(function (n) { elite[n] = 1; });
+      var pivots = input.pivots || {};
+      var bans = Object.create(null);
+      (input.bans || []).forEach(function (n) { bans[n] = 1; });
+      var extraLayers = input.extraLayers || {};
+      var warnings = [];
+
+      var members = Object.create(null);     // 原始成员（含转职）
+      covenants.forEach(function (c) { members[c.name] = Object.create(null); });
+
+      function addMember(op, cov) {
+        if (!cov || !members[cov]) return;
+        members[cov][op.name] = 1;
+      }
+      field.forEach(function (op) {
+        op.covs.forEach(function (cov) { addMember(op, cov); });
+        if (pivots[op.name]) addMember(op, pivots[op.name]);      // 变形同构体：额外计入
+      });
+
+      var counts = Object.create(null);
+      covenants.forEach(function (c) {
+        var set = members[c.name];
+        var n = Object.keys(set).length;
+        if (c.countRule === 'field+bench') {
+          bench.forEach(function (op) {
+            if (set[op.name]) return;                 // 同名干员只算一次
+            if (op.covs.indexOf(c.name) >= 0 || pivots[op.name] === c.name) n++;
+          });
+        }
+        if (c.countRule === 'fallback') {
+          // 协防干员：本命成员 + 阵营（盟约）被 BAN 的干员作为兜底计入，同名只算一次
+          var fb = Object.create(null);
+          Object.keys(set).forEach(function (n2) { fb[n2] = 1; });
+          field.forEach(function (op) {
+            if (op.covs.some(function (cov) { return bans[cov]; })) fb[op.name] = 1;
+          });
+          n = Object.keys(fb).length;
+        }
+        if (c.countRule === 'elite') {
+          // 绝技：按「在场精英化人数」计算，与是否携带该盟约无关
+          n = field.filter(function (op) { return elite[op.name]; }).length;
+        }
+        counts[c.name] = n;
+      });
+
+      // 调和：使场上已有成员的核心盟约人数 +1
+      var harmonyActive = counts['调和'] >= 1 && !bans['调和'];
+      if (harmonyActive) {
+        CORE_COVS.forEach(function (cn) { if (counts[cn] > 0) counts[cn] += 1; });
+      }
+
+      // 独行：≥2 人失效
+      if (counts['独行'] >= 2) {
+        warnings.push('独行：场上 ' + counts['独行'] + ' 名，≥2 人时盟约失效');
+        counts['独行'] = 0;
+      }
+
+      var tiers = Object.create(null);
+      var rates = Object.create(null);
+      var litList = [];
+      covenants.forEach(function (c) {
+        var n = counts[c.name];
+        var level = 0, curAt = 0, nextAt = null;
+        c.tiers.forEach(function (t) { if (n >= t.at) { level++; curAt = t.at; } });
+        for (var i = 0; i < c.tiers.length; i++) { if (c.tiers[i].at > n) { nextAt = c.tiers[i].at; break; } }
+        var active = level > 0 && !bans[c.name];
+        if (bans[c.name] && level > 0) warnings.push('【' + c.name + '】本局已禁用，不计入点亮');
+        tiers[c.name] = {
+          count: n, level: level, active: active, at: curAt, nextAt: nextAt,
+          gap: nextAt == null ? 0 : nextAt - n, banned: !!bans[c.name],
+          kind: c.kind, rule: c.countRule
+        };
+        if (active) litList.push(c.name);
+
+        // 层数增速：仅在盟约点亮后生效
+        var perRound = 0, oneShot = 0, sources = [];
+        if (active) {
+          field.forEach(function (op) {
+            var tr = traitFor(op, !!elite[op.name]);
+            tr.gains.forEach(function (g) {
+              if (g.cov !== c.name) return;
+              if (g.oneShot) { oneShot += g.amount; sources.push({ op: op.name, value: g.amount, type: '单次' }); }
+              else {
+                var v = g.perRoundCap != null ? g.perRoundCap : g.amount;
+                perRound += v; sources.push({ op: op.name, value: v, type: '每回合' });
+              }
+            });
+            if (tr.convert && tr.convert.cov === c.name) sources.push({ op: op.name, value: tr.convert.amount, type: '转换' });
+          });
+        }
+        rates[c.name] = { perRound: perRound, oneShot: oneShot, sources: sources, extra: extraLayers[c.name] || 0 };
+      });
+
+      // 卡西米尔 6 档：召唤依赖整备区最右侧的卡西米尔干员
+      if (tiers['卡西米尔'] && tiers['卡西米尔'].active && tiers['卡西米尔'].level >= 2) {
+        var right = bench.length ? bench[bench.length - 1] : null;
+        if (!right || right.covs.indexOf('卡西米尔') < 0) {
+          warnings.push('卡西米尔 6 档：整备区最右侧不是卡西米尔干员，召唤效果无法触发');
+        }
+      }
+
+      var litCount = litList.length;
+      var tierCount = 0;
+      covenants.forEach(function (c) { tierCount += tiers[c.name].active ? tiers[c.name].level : 0; });
+      var totalRate = 0;
+      // 「获得时」类效果只用于点亮/档位，不计入每回合叠层
+      covenants.forEach(function (c) { totalRate += (rates[c.name].perRound + rates[c.name].extra); });
+
+      return {
+        field: field.map(function (o) { return o.name; }),
+        bench: bench.map(function (o) { return o.name; }),
+        counts: counts, tiers: tiers, rates: rates, warnings: warnings,
+        lit: litList, litCount: litCount, tierCount: tierCount, totalRate: totalRate,
+        harmony: harmonyActive
+      };
+    }
+
+    /* ---------- 候选推荐 ---------- */
+    function rankCandidates(state, opts) {
+      opts = opts || {};
+      var excluded = Object.create(null);
+      (opts.exclude || []).forEach(function (n) { excluded[n] = 1; });
+      var onField = Object.create(null);
+      state.field.forEach(function (n) { onField[n] = 1; });
+      var base = compute({ field: state.field, bench: state.bench, elite: opts.elite, pivots: opts.pivots, bans: opts.bans, extraLayers: opts.extraLayers });
+
+      var out = [];
+      operators.forEach(function (op) {
+        if (op.name === '盟约·辅助干员') return; // 策略赠送单位，不参与配队
+        if (onField[op.name] || excluded[op.name]) return;
+        if (opts.onlyCov && op.covs.indexOf(opts.onlyCov) < 0) return;
+        var next = compute({ field: base.field.concat([op.name]), bench: state.bench, elite: opts.elite, pivots: opts.pivots, bans: opts.bans, extraLayers: opts.extraLayers });
+        var dTier = next.tierCount - base.tierCount;
+        var dLit = next.litCount - base.litCount;
+        var dRate = next.totalRate - base.totalRate;
+        var reasons = [], litCovs = [];
+        op.covs.forEach(function (cov) {
+          var a = base.tiers[cov], b = next.tiers[cov];
+          if (!a) return;
+          if (b.level > a.level) { reasons.push('点亮【' + cov + '】' + (b.level === 2 ? ' 6 档' : '')); litCovs.push(cov); }
+          else if (a.nextAt != null && b.count === a.nextAt) reasons.push('【' + cov + '】' + a.count + '→' + a.nextAt + '，点亮');
+          else if (a.nextAt != null) reasons.push('【' + cov + '】' + b.count + '/' + a.nextAt);
+        });
+        if (dRate > 0) reasons.push('每回合 +' + dRate + ' 层');
+        out.push({
+          op: op.name, opRef: op, dTier: dTier, dLit: dLit, dRate: dRate,
+          score: dTier * 1000 + dLit * 300 + dRate * 5,
+          reasons: reasons.slice(0, 3), litCovs: litCovs, covs: op.covs, tierNum: op.tierNum
+        });
+      });
+      out.sort(function (a, b) { return b.score - a.score || a.op.localeCompare(b.op, 'zh'); });
+      return out;
+    }
+
+    return {
+      data: data, covenants: covenants, operators: operators,
+      covByName: covByName, opByName: opByName,
+      compute: compute, rankCandidates: rankCandidates,
+      traitFor: function (op, elite) { return traitFor(opByName[op] || op, elite); },
+      CORE_COVS: CORE_COVS, TIER_NAMES: TIER_NAMES
+    };
+  }
+
+  var api = { makeCore: makeCore };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else global.Core = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+<script>/* 求解器：给定目标盟约档位，求满足条件的最少人数配队（设计一）
+ * 规则：
+ *  - 调和：可选「是否允许魔王入队」；魔王占 1 人，调和让核心盟约 +1（下界与剪枝都计入）
+ *  - 独行：至多 1 名独行干员，否则失效
+ *  - 绝技：按精锐人数计算，求解时把在场干员全部视为精锐
+ *  - 远见 / 奇迹 / 投资人：整备区成员也计入
+ *  - 协防干员：被 BAN 阵营的干员作为兜底计入
+ *  - 变形同构体：只在某盟约差 1 人时补位，受数量上限约束
+ *  - 严格模式：只允许点亮目标盟约，且档位恰好等于目标档位
+ * 输出按「人数升序 → 点亮档位降序 → 层数增速降序」排序。
+ */
+(function (global) {
+  'use strict';
+
+  function solve(core, opts) {
+    opts = opts || {};
+    var t0 = Date.now();
+    var budgetMs = opts.budgetMs || 900;
+    var limit = opts.limit || 3000; // 需要足够多的样本才能把「激活盟约多」的方案搜出来
+    var sortMode = opts.sortMode === 'tier' ? 'tier' : 'cov';
+    var maxSize = opts.maxSize || 8;
+    var strict = !!opts.strict;
+    var allowHarmony = opts.harmony !== false; // 是否允许「魔王」这类调和干员入队（占 1 人，调和让核心 +1）
+
+    var bans = Object.create(null);
+    (opts.bans || []).forEach(function (n) { bans[n] = 1; });
+    if (!allowHarmony) bans['调和'] = 1; // 不允许魔王：调和干员不进候选，调和也不生效
+    var exclude = Object.create(null);
+    (opts.exclude || []).forEach(function (n) { exclude[n] = 1; });
+    var locked = (opts.locked || []).filter(function (n) { return core.opByName[n]; });
+    var lockedSet = Object.create(null);
+    locked.forEach(function (n) { lockedSet[n] = 1; });
+    var pivotBudget = Math.max(0, opts.pivotBudget || 0);
+    var userElite = (opts.elite || []).filter(function (n) { return core.opByName[n]; });
+    var bench = (opts.bench || []).filter(function (n) { return core.opByName[n]; });
+
+    var targets = (opts.targets || []).filter(function (t) { return t && t.at > 0 && core.covByName[t.cov]; });
+    if (!targets.length) return { solutions: [], note: '未选择目标盟约', elapsed: 0 };
+
+    var bannedTargets = targets.filter(function (t) { return bans[t.cov]; });
+    if (bannedTargets.length) {
+      return { solutions: [], note: '目标中包含已禁用盟约：' + bannedTargets.map(function (t) { return t.cov; }).join('、'), elapsed: 0 };
+    }
+
+    var need = Object.create(null);
+    targets.forEach(function (t) { need[t.cov] = t.at; });
+    var needList = targets.map(function (t) { return { cov: t.cov, at: t.at, c: core.covByName[t.cov] }; });
+    var eliteTarget = needList.some(function (t) { return t.c.countRule === 'elite'; });
+    var soloTarget = !!need['独行'];
+    var hasCoreTarget = needList.some(function (t) { return t.c.kind === '核心'; });
+
+    function hasSolo(o) { return o.covs.indexOf('独行') >= 0; }
+    function isHarmony(o) { return o.covs.indexOf('调和') >= 0; }
+
+    var lockedHarmony = locked.some(function (n) { return isHarmony(core.opByName[n]); });
+    var lockedSolo = locked.some(function (n) { return hasSolo(core.opByName[n]); });
+
+    // 整备区对「远见 / 奇迹 / 投资人」的固定贡献（同名只算一次）
+    var benchAdd = Object.create(null);
+    core.covenants.forEach(function (c) {
+      if (c.countRule !== 'field+bench') return;
+      var once = Object.create(null), n = 0;
+      bench.forEach(function (name) {
+        if (once[name]) return;
+        once[name] = 1;
+        if (core.opByName[name].covs.indexOf(c.name) >= 0) n++;
+      });
+      benchAdd[c.name] = n;
+    });
+
+    function targetLevel(c, at) { var lv = 0; c.tiers.forEach(function (x) { if (x.at <= at) lv++; }); return lv; }
+
+    // 候选池：覆盖目标盟约的干员 + 允许时的调和干员（魔王）+ 被 BAN 阵营的兜底干员
+    var pool = core.operators.filter(function (o) {
+      if (o.name === '盟约·辅助干员') return false; // 策略赠送单位，不参与配队
+      if (exclude[o.name] || lockedSet[o.name]) return false;
+      if (o.covs.some(function (c) { return need[c]; })) return true;
+      if (allowHarmony && hasCoreTarget && isHarmony(o)) return true;
+      if (need['协防干员'] && o.covs.some(function (c) { return bans[c]; })) return true;
+      return false;
+    }).map(function (o) {
+      var cover = o.covs.filter(function (c) { return need[c]; }).length;
+      return { op: o, cover: cover };
+    });
+    pool.sort(function (a, b) { return b.cover - a.cover || b.op.tierNum - a.op.tierNum; });
+    var P = pool.map(function (x) { return x.op; });
+
+    var solutions = [], seen = Object.create(null), visits = 0, complete = true, stop = false;
+
+    // 剪枝：用「最乐观」的有效人数判断名额是否够补齐，全部特殊计数都计入
+    function prune(chosen, room) {
+      var all = locked.concat(chosen);
+      var raw = Object.create(null), fb = Object.create(null), solo = 0, harm = false;
+      var eliteCount = all.length;                    // 绝技：在场每个人都可以精锐
+      all.forEach(function (o) {
+        if (hasSolo(o)) solo++;
+        if (isHarmony(o) && !bans['调和']) harm = true;
+        if (o.covs.some(function (c) { return bans[c]; })) fb[o.name] = 1;
+        o.covs.forEach(function (c) { if (need[c]) raw[c] = (raw[c] || 0) + 1; });
+      });
+      if (soloTarget && solo > 1) return true;
+      for (var i = 0; i < needList.length; i++) {
+        var t = needList[i], have = raw[t.cov] || 0;
+        if (t.c.countRule === 'field+bench') have += benchAdd[t.cov] || 0;
+        if (t.c.countRule === 'fallback') {
+          var set = Object.create(null);
+          all.forEach(function (o) { if (o.covs.indexOf(t.cov) >= 0) set[o.name] = 1; });
+          Object.keys(fb).forEach(function (n2) { set[n2] = 1; });
+          have = Object.keys(set).length;
+        }
+        if (t.c.countRule === 'elite') {
+          if (eliteCount + room < t.at) return true;
+          continue;
+        }
+        if (t.c.kind === '核心' && harm && (have > 0 || room > 0)) have += 1;
+        if (have + room + pivotBudget < t.at) return true;
+      }
+      return false;
+    }
+
+    function evaluate(chosen) {
+      var team = locked.concat(chosen);
+      var names = team.map(function (o) { return o.name; });
+      if (names.length > maxSize) return null;
+
+      // 绝技：把在场干员全部视为精锐（精锐只影响层数增速与绝技计数）
+      var elite = Object.create(null);
+      userElite.forEach(function (n) { elite[n] = 1; });
+      if (eliteTarget) names.forEach(function (n) { elite[n] = 1; });
+
+      // 变形同构体：逐次补「差 1」的缺口，每次重新评估（把调和 / 整备区 / 兜底都算进去）
+      var pivots = Object.create(null);
+      var remainingPivot = pivotBudget;
+      var st = core.compute({ field: names, bench: bench, elite: Object.keys(elite), pivots: pivots, bans: opts.bans, extraLayers: opts.extraLayers });
+      while (remainingPivot > 0) {
+        var gap = null;
+        for (var i = 0; i < needList.length; i++) {
+          if ((st.counts[needList[i].cov] || 0) < needList[i].at) { gap = needList[i]; break; }
+        }
+        if (!gap) break;
+        var pick = null;
+        for (var j = 0; j < team.length; j++) {
+          var o = team[j];
+          if (o.covs.indexOf(gap.cov) >= 0 || pivots[o.name]) continue;
+          pick = o; break;
+        }
+        if (!pick) break;
+        pivots[pick.name] = gap.cov;
+        remainingPivot--;
+        st = core.compute({ field: names, bench: bench, elite: Object.keys(elite), pivots: pivots, bans: opts.bans, extraLayers: opts.extraLayers });
+      }
+
+      var ok = needList.every(function (t) { return (st.counts[t.cov] || 0) >= t.at; });
+      if (!ok) return null;
+
+      // 严格模式：只点亮目标盟约，且档位与目标档位完全一致（不多不少）
+      if (strict) {
+        for (var k = 0; k < core.covenants.length; k++) {
+          var c = core.covenants[k];
+          var got = st.tiers[c.name].active ? st.tiers[c.name].level : 0;
+          var want = need[c.name] ? targetLevel(c, need[c.name]) : 0;
+          if (got !== want) return null;
+        }
+      }
+
+      var key = names.slice().sort().join('|');
+      if (seen[key]) return null;
+      seen[key] = 1;
+
+      var targetTiers = 0;
+      needList.forEach(function (t) { targetTiers += st.tiers[t.cov].level; });
+      var totalTier = 0;
+      team.forEach(function (o) { totalTier += (o.tierNum || 0); });
+      return {
+        team: names, size: names.length, bench: bench.slice(), elite: Object.keys(elite),
+        pivots: pivots, tierCount: st.tierCount, extraTiers: st.tierCount - targetTiers, totalTier: totalTier,
+        totalRate: st.totalRate, litCount: st.litCount, strict: strict,
+        warnings: st.warnings.slice(), state: st
+      };
+    }
+
+    function dfs(chosen, startIdx, k) {
+      if (stop) return;
+      if (++visits % 2048 === 0 && Date.now() - t0 > budgetMs) { complete = false; stop = true; return; }
+      if (chosen.length === k) {
+        var res = evaluate(chosen);
+        if (res) { solutions.push(res); if (solutions.length >= limit) stop = true; }
+        return;
+      }
+      if (prune(chosen, k - chosen.length)) return;
+      for (var i = startIdx; i < P.length && !stop; i++) {
+        var o = P[i];
+        if (soloTarget && hasSolo(o) && (lockedSolo || chosen.some(hasSolo))) continue;
+        chosen.push(o);
+        dfs(chosen, i + 1, k);
+        chosen.pop();
+      }
+    }
+
+    // 下界：调和让核心盟约少 1 人；整备区已提供的名额要扣掉；绝技至少要 at 名在场干员
+    var startK = locked.length;
+    needList.forEach(function (t) {
+      var base = t.at;
+
+      if (t.c.countRule === 'field+bench') base = Math.max(0, base - (benchAdd[t.cov] || 0));
+      if (t.c.countRule === 'fallback') base = 0;
+      startK = Math.max(startK, base);
+    });
+    if (!startK) startK = 1;
+    if (startK > maxSize) {
+      return { solutions: [], note: '场上上限 ' + maxSize + ' 人，无法放下最少 ' + startK + ' 人的方案', elapsed: Date.now() - t0, searched: P.length };
+    }
+    var topK = Math.min(maxSize, startK + 6);
+    for (var k = startK; k <= topK && !stop; k++) {
+      dfs([], 0, k);
+    }
+
+    // 排序：人数少 >（激活盟约多 / 总等阶高，可切换）> 每回合叠层多
+    solutions.sort(function (a, b) {
+      if (a.size !== b.size) return a.size - b.size;
+      if (sortMode === 'tier') {
+        if (b.totalTier !== a.totalTier) return b.totalTier - a.totalTier;
+      } else {
+        if (b.litCount !== a.litCount) return b.litCount - a.litCount;
+        if (b.totalTier !== a.totalTier) return b.totalTier - a.totalTier;
+      }
+      return b.totalRate - a.totalRate || b.tierCount - a.tierCount || a.team.join().localeCompare(b.team.join(), 'zh');
+    });
+
+    return {
+      solutions: solutions.slice(0, limit),
+      searched: P.length,
+      elapsed: Date.now() - t0,
+      complete: complete,
+      truncated: solutions.length >= limit,
+      strict: strict,
+      sortMode: sortMode
+    };
+  }
+
+  var api = { solve: solve };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else global.Solver = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+<script>/* 关系图谱：干员 ↔ 盟约 二部图（Canvas 力导向，可拖拽） */
+(function (global) {
+  'use strict';
+
+  var DATA = global.__DATA__ || {};
+
+  var TIER_COLORS = ['#7f8c99', '#6fa86f', '#4f9ad6', '#9b7fd4', '#e0a45e', '#e2746a'];
+  var CORE_COLOR = '#e6c27a';
+  var PALETTE = ['#63c6e8', '#a98cf0', '#5fd39a', '#e2605c', '#e0a45e', '#7ec8e3', '#c9a45c', '#8fd6a8', '#d98cc0'];
+
+  var R_OP = 21, R_COV = 24;
+
+  function Graph(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.nodes = []; this.links = [];
+    this.hover = null; this.dragNode = null; this.dragging = false;
+    this.zoom = 1; this.panX = 0; this.panY = 0; this.panning = null;
+    this.alpha = 0;
+    this.dpr = Math.max(1, Math.min(2, global.devicePixelRatio || 1));
+    this.core = null; this.state = null;
+    this.params = { grav: 1, charge: 1, len: 1, standard: true };
+    var self = this;
+
+    this._pos = function (e) {
+      var r = canvas.getBoundingClientRect();
+      var sx = self.w / (r.width || 1), sy = self.h / (r.height || 1);
+      var mx = (e.clientX - r.left) * sx, my = (e.clientY - r.top) * sy;
+      return { x: (mx - self.panX) / self.zoom, y: (my - self.panY) / self.zoom };
+    };
+    this._hit = function (p) {
+      var best = null, bd = 1e9;
+      self.nodes.forEach(function (n) {
+        var d = (n.x - p.x) * (n.x - p.x) + (n.y - p.y) * (n.y - p.y);
+        var rr = (n.r + 8) * (n.r + 8);
+        if (d < rr && d < bd) { bd = d; best = n; }
+      });
+      return best;
+    };
+
+    canvas.addEventListener('pointermove', function (e) {
+      var p = self._pos(e);
+      if (self.panning) {
+        var r0 = canvas.getBoundingClientRect();
+        var sx0 = self.w / (r0.width || 1), sy0 = self.h / (r0.height || 1);
+        self.panX = self.panning.px + (e.clientX - self.panning.x) * sx0;
+        self.panY = self.panning.py + (e.clientY - self.panning.y) * sy0;
+        self.draw();
+        return;
+      }
+      if (self.dragNode) {
+        self.dragNode.x = p.x; self.dragNode.y = p.y;
+        self.dragNode.vx = 0; self.dragNode.vy = 0;
+        self.alpha = Math.max(self.alpha, 0.45);
+        self.start();
+        return;
+      }
+      var best = self._hit(p);
+      if (best !== self.hover) { self.hover = best; self.draw(); }
+      canvas.style.cursor = best ? 'grab' : 'default';
+    });
+
+    canvas.addEventListener('pointerdown', function (e) {
+      var p = self._pos(e);
+      var n = self._hit(p);
+      if (!n) {
+        self.panning = { x: e.clientX, y: e.clientY, px: self.panX, py: self.panY };
+        canvas.style.cursor = 'grabbing';
+        return;
+      }
+      e.preventDefault();
+      self.dragNode = n; self.dragging = true; n.fixed = true;
+      canvas.style.cursor = 'grabbing';
+      self.alpha = Math.max(self.alpha, 0.5); self.start();
+    });
+
+    canvas.addEventListener('pointerup', function () {
+      if (self.dragNode) { self.dragNode.fixed = false; self.dragNode = null; }
+      self.panning = null;
+      canvas.style.cursor = 'grab';
+    });
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var r = canvas.getBoundingClientRect();
+      var sx = self.w / (r.width || 1), sy = self.h / (r.height || 1);
+      var mx = (e.clientX - r.left) * sx, my = (e.clientY - r.top) * sy;
+      var wx = (mx - self.panX) / self.zoom, wy = (my - self.panY) / self.zoom;
+      var f = e.deltaY < 0 ? 1.1 : 0.9;
+      self.zoom = Math.max(0.45, Math.min(3, self.zoom * f));
+      self.panX = mx - wx * self.zoom;
+      self.panY = my - wy * self.zoom;
+      self.draw();
+    }, { passive: false });
+    canvas.addEventListener('dblclick', function () {
+      self.zoom = 1; self.panX = 0; self.panY = 0; self.draw();
+    });
+    canvas.addEventListener('pointerleave', function () {
+      if (self.dragNode) { self.dragNode.fixed = false; self.dragNode = null; }
+      if (self.hover) { self.hover = null; self.draw(); }
+    });
+
+    global.addEventListener('resize', function () { self.resize(); });
+    if (global.ResizeObserver) {
+      this._ro = new global.ResizeObserver(function () { self.resize(); });
+      this._ro.observe(canvas);
+    }
+    this.resize();
+    this._raf = null;
+  }
+
+  Graph.prototype.resize = function () {
+    var w = this.canvas.clientWidth || 600, h = this.canvas.clientHeight || 400;
+    this.canvas.width = Math.round(w * this.dpr);
+    this.canvas.height = Math.round(h * this.dpr);
+    this.w = w; this.h = h;
+    if (this.nodes.length) { this.reanchor(); this.alpha = 0.7; this.start(); }
+    this.draw();
+  };
+
+  Graph.prototype.setData = function (core) {
+    this.core = core;
+    this.colors = {};
+    core.covenants.forEach(function (c, i) {
+      this.colors[c.name] = c.kind === '核心' ? CORE_COLOR : PALETTE[i % PALETTE.length];
+    }, this);
+  };
+
+  Graph.prototype.reanchor = function () {
+    var covs = this.nodes.filter(function (n) { return n.type === 'cov'; });
+    var cx = this.w / 2, cy = this.h / 2;
+    var R = Math.min(this.w, this.h) * (covs.length > 10 ? 0.36 : 0.30);
+    covs.forEach(function (n, i) {
+      var a = -Math.PI / 2 + (i / Math.max(1, covs.length)) * Math.PI * 2;
+      n.ax = cx + Math.cos(a) * R;
+      n.ay = cy + Math.sin(a) * R * 0.95;
+    });
+    var ops = this.nodes.filter(function (n) { return n.type === 'op'; });
+    ops.forEach(function (n, i) {
+      var mine = covs.filter(function (c) { return n.op.covs.indexOf(c.name) >= 0; });
+      var a = mine.length
+        ? mine.reduce(function (s, c) { return s + Math.atan2(c.ay - cy, c.ax - cx); }, 0) / mine.length
+        : (i / Math.max(1, ops.length)) * Math.PI * 2;
+      var r = R * 0.48;
+      n.ax = cx + Math.cos(a) * r;
+      n.ay = cy + Math.sin(a) * r * 0.95;
+    });
+  };
+
+  Graph.prototype.update = function (state) {
+    var self = this;
+    this.state = state;
+    if (this.preview) { this.buildPreview(); return; }
+    if (!this.core) return;
+    var core = this.core;
+    var old = {};
+    this.nodes.forEach(function (n) { old[n.id] = n; });
+
+    var nodes = [], links = [];
+    var covs = core.covenants.filter(function (c) { return (state.counts[c.name] || 0) > 0; });
+
+    covs.forEach(function (c) {
+      var prev = old['c:' + c.name];
+      nodes.push({
+        id: 'c:' + c.name, type: 'cov', name: c.name, kind: c.kind, r: R_COV, src: (DATA.icons && DATA.icons[c.name]) || '',
+        x: prev ? prev.x : this.w / 2, y: prev ? prev.y : this.h / 2,
+        vx: 0, vy: 0, ax: 0, ay: 0,
+        level: state.tiers[c.name].level, count: state.counts[c.name],
+        color: this.colors[c.name]
+      });
+    }, this);
+
+    (state.field || []).forEach(function (name, oi) {
+      var op = core.opByName[name];
+      if (!op) return;
+      var prev = old['o:' + name];
+      nodes.push({
+        id: 'o:' + name, type: 'op', name: name, op: op, r: R_OP, idx: oi, src: (DATA.avatars && DATA.avatars[name]) || '',
+        x: prev ? prev.x : this.w / 2, y: prev ? prev.y : this.h / 2,
+        vx: 0, vy: 0, ax: 0, ay: 0,
+        color: TIER_COLORS[(op.tierNum || 1) - 1]
+      });
+    }, this);
+
+    nodes.forEach(function (n) {
+      if (n.type !== 'op') return;
+      (n.op.covs || []).forEach(function (cov) {
+        var t = nodes.find(function (m) { return m.type === 'cov' && m.name === cov; });
+        if (t) links.push({ a: n, b: t, color: t.color });
+      });
+    });
+
+    this.nodes = nodes; this.links = links;
+    this.reanchor();
+    this.loadImages();
+    // 新节点从锚点附近轻微抖入，避免全部叠在中心
+    nodes.forEach(function (n) {
+      if (!old[n.id]) {
+        if (self.params.standard) {
+          n.x = n.ax + (Math.random() - 0.5) * 30;
+          n.y = n.ay + (Math.random() - 0.5) * 30;
+        } else {
+          n.x = self.w / 2 + (Math.random() - 0.5) * self.w * 0.5;
+          n.y = self.h / 2 + (Math.random() - 0.5) * self.h * 0.5;
+        }
+      }
+    });
+    this.alpha = 1;
+    this.start();
+  };
+
+  // 设置页示意小图：与正式图谱共用同一套 Graph 实现，只是换了一份迷你数据
+  Graph.prototype.setPreview = function (spec, params) {
+    this.preview = spec;
+    if (params) this.params = params;
+    this.update();
+  };
+
+  Graph.prototype.buildPreview = function () {
+    var spec = this.preview, self = this;
+    var w = this.w, h = this.h;
+    var cx = w / 2, cy = h / 2;
+    var R = Math.min(w, h) * 0.32;
+    var nodes = [], links = [];
+
+    spec.covs.forEach(function (name, i) {
+      var a = -Math.PI / 2 + (i / spec.covs.length) * Math.PI * 2;
+      nodes.push({
+        id: 'c:' + name, type: 'cov', name: name, kind: 'extra', r: 22,
+        x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R,
+        ax: cx + Math.cos(a) * R, ay: cy + Math.sin(a) * R,
+        vx: 0, vy: 0, level: i === 0 ? 2 : 1, count: 6 - i,
+        color: PALETTE[i % PALETTE.length],
+        src: (DATA.icons && DATA.icons[name]) || ''
+      });
+    });
+
+    spec.ops.forEach(function (name, i) {
+      var op = (self.core && self.core.opByName && self.core.opByName[name]) || null;
+      var covs = (op && op.covs) || [];
+      var host = nodes.filter(function (m) { return m.type === 'cov' && covs.indexOf(m.name) >= 0; })[0] || nodes[0];
+      var a2 = -Math.PI / 2 + (i / spec.ops.length) * Math.PI * 2;
+      var rr = R * 0.6;
+      nodes.push({
+        id: 'o:' + name, type: 'op', name: name, op: op, r: 16, idx: i,
+        x: cx + Math.cos(a2) * rr, y: cy + Math.sin(a2) * rr,
+        ax: host ? host.ax * 0.6 + cx * 0.4 : cx,
+        ay: host ? host.ay * 0.6 + cy * 0.4 : cy,
+        vx: 0, vy: 0, color: TIER_COLORS[2],
+        src: (DATA.avatars && DATA.avatars[name]) || ''
+      });
+    });
+
+    if (spec.links) {
+      spec.links.forEach(function (pair) {
+        var a = nodes.filter(function (m) { return m.type === 'op' && m.name === pair[0]; })[0];
+        var b = nodes.filter(function (m) { return m.type === 'cov' && m.name === pair[1]; })[0];
+        if (a && b) links.push({ a: a, b: b, color: b.color });
+      });
+    } else {
+      nodes.forEach(function (n) {
+        if (n.type !== 'op' || !n.op) return;
+        (n.op.covs || []).forEach(function (c) {
+          var t = nodes.filter(function (m) { return m.type === 'cov' && m.name === c; })[0];
+          if (t) links.push({ a: n, b: t, color: t.color });
+        });
+      });
+    }
+
+    this.nodes = nodes; this.links = links;
+    this.loadImages();
+    this.alpha = 1;
+    this.start();
+  };
+
+  Graph.prototype.start = function () {
+    var self = this;
+    if (this._raf) return;
+    var step = function () {
+      self._raf = null;
+      if (self.alpha < 0.008 && !self.dragNode) { self.draw(); return; }
+      self.simulate();
+      self.draw();
+      self._raf = global.requestAnimationFrame(step);
+    };
+    this._raf = global.requestAnimationFrame(step);
+  };
+
+  Graph.prototype.setParams = function (p) {
+    if (p) {
+      if (p.grav != null) this.params.grav = p.grav;
+      if (p.charge != null) this.params.charge = p.charge;
+      if (p.len != null) this.params.len = p.len;
+      if (p.standard != null) this.params.standard = p.standard;
+    }
+    this.alpha = Math.max(this.alpha, 0.6);
+    this.start();
+  };
+
+  // 参考 d3-force 的三力模型：链接力(弹簧) + 多体力(两两排斥) + 向心力(质心归中)
+  // alpha 为模拟"热度"，每帧衰减；三种力都按 alpha 缩放，收敛后自然静止。
+  Graph.prototype.simulate = function () {
+    var nodes = this.nodes, links = this.links;
+    var P = this.params;
+    if (!nodes.length) { this.alpha = 0; return; }
+    var w = this.w, h = this.h;
+    var n = nodes.length, alpha = this.alpha;
+
+    // ① 链接力：把有关系的两个节点拉到目标边长附近（d3 link force：直接位移）
+    links.forEach(function (l) {
+      var dx = l.a.x - l.b.x, dy = l.a.y - l.b.y;
+      var d = Math.sqrt(dx * dx + dy * dy) || 1;
+      var target = 118 * P.len * Math.max(0.7, Math.min(w, h) / 520);
+      var k = ((d - target) / d) * 0.42 * alpha;
+      var ox = dx * k, oy = dy * k;
+      l.a.x -= ox; l.a.y -= oy;
+      l.b.x += ox; l.b.y += oy;
+    });
+
+    // 标准结构布局：盟约锚在环形位置，干员围绕自己的盟约（锚点弹簧力）
+    if (P.standard) {
+      nodes.forEach(function (nd) {
+        var k = (nd.type === 'cov' ? 0.06 : 0.014) * alpha;
+        nd.vx += (nd.ax - nd.x) * k;
+        nd.vy += (nd.ay - nd.y) * k;
+      });
+    }
+
+    // ② 多体力：所有节点两两排斥，含碰撞分离（d3 many-body force）
+    for (var i = 0; i < n; i++) {
+      var A = nodes[i];
+      for (var j = i + 1; j < n; j++) {
+        var B = nodes[j];
+        var dx2 = B.x - A.x, dy2 = B.y - A.y;
+        var d2 = dx2 * dx2 + dy2 * dy2;
+        if (d2 < 1) { d2 = 1; dx2 = (Math.random() - 0.5) * 0.6; dy2 = (Math.random() - 0.5) * 0.6; }
+        var dd = Math.sqrt(d2);
+        var charge = (A.type === 'cov' || B.type === 'cov' ? 13000 : 7800) * P.charge;
+        var f = (charge / Math.max(d2, 60)) * alpha;
+        if (f > 6) f = 6;
+        var ux2 = dx2 / dd, uy2 = dy2 / dd;
+        A.vx -= ux2 * f; A.vy -= uy2 * f;
+        B.vx += ux2 * f; B.vy += uy2 * f;
+        var minD = A.r + B.r + 14;
+        if (dd < minD) {
+          var push = (minD - dd) * 0.5 * alpha;
+          A.vx -= ux2 * push; A.vy -= uy2 * push;
+          B.vx += ux2 * push; B.vy += uy2 * push;
+        }
+      }
+    }
+
+    // ③ 向心力：整体平移，把质心挪到画布中心（d3 forceCenter 的做法：刚性平移，不给速度）
+    var mx = 0, my = 0;
+    nodes.forEach(function (nd) { mx += nd.x; my += nd.y; });
+    mx /= n; my /= n;
+    var shift = Math.min(1, 0.08 * P.grav * alpha);
+    var ox3 = (w / 2 - mx) * shift, oy3 = (h / 2 - my) * shift;
+    nodes.forEach(function (nd) {
+      if (nd.fixed) return;
+      nd.x += ox3; nd.y += oy3;
+    });
+
+    // 积分：速度衰减 + 边界反弹
+    nodes.forEach(function (nd) {
+      if (nd.fixed) { nd.vx = 0; nd.vy = 0; return; }
+      nd.vx *= 0.72; nd.vy *= 0.72;
+      nd.x += nd.vx; nd.y += nd.vy;
+      var pad = nd.r + 8;
+      if (nd.x < pad) { nd.x = pad; nd.vx = Math.abs(nd.vx) * 0.3; }
+      if (nd.x > w - pad) { nd.x = w - pad; nd.vx = -Math.abs(nd.vx) * 0.3; }
+      if (nd.y < pad) { nd.y = pad; nd.vy = Math.abs(nd.vy) * 0.3; }
+      if (nd.y > h - pad) { nd.y = h - pad; nd.vy = -Math.abs(nd.vy) * 0.3; }
+    });
+
+    this.alpha += (0 - this.alpha) * 0.018;
+    if (this.alpha < 0.004) this.alpha = 0;
+  };
+
+  // 头像/盟约图标：懒加载到 Image 对象，加载完成后再重绘一次
+  Graph.prototype.loadImages = function () {
+    var self = this;
+    this.imgs = this.imgs || {};
+    this.nodes.forEach(function (n) {
+      if (!n.src || self.imgs[n.id]) return;
+      var im = new Image();
+      im.onload = function () { self.draw(); };
+      im.src = n.src;
+      self.imgs[n.id] = im;
+    });
+  };
+
+  function hexPath(ctx, x, y, r) {
+    for (var i = 0; i < 6; i++) {
+      var a = Math.PI / 6 + i * Math.PI / 3;
+      var px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  Graph.prototype.draw = function () {
+    var ctx = this.ctx, dpr = this.dpr, w = this.w, h = this.h;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    var hover = this.hover;
+    var nodes = this.nodes, links = this.links;
+
+    if (!nodes.length) {
+      ctx.fillStyle = '#2c3945';
+      ctx.font = '13px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(this.state && this.state.field.length ? '' : '从左侧拖入干员，图谱会在有成员时展开', w / 2, h / 2);
+      return;
+    }
+
+    ctx.save();
+    ctx.translate(this.panX, this.panY);
+    ctx.scale(this.zoom, this.zoom);
+
+    var related = null;
+    if (hover) {
+      related = {}; related[hover.id] = 1;
+      links.forEach(function (l) {
+        if (l.a === hover) related[l.b.id] = 1;
+        if (l.b === hover) related[l.a.id] = 1;
+      });
+    }
+
+    links.forEach(function (l) {
+      var active = hover ? (l.a === hover || l.b === hover) : true;
+      ctx.beginPath(); ctx.moveTo(l.a.x, l.a.y); ctx.lineTo(l.b.x, l.b.y);
+      if (hover && !active) ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      else if (hover) ctx.strokeStyle = l.color + 'cc';
+      else ctx.strokeStyle = 'rgba(200,220,255,0.12)';
+      ctx.lineWidth = hover && active ? 2 : 1;
+      ctx.stroke();
+    });
+
+    var imgs = this.imgs || {};
+    nodes.forEach(function (n) {
+      var dim = hover && !related[n.id];
+      ctx.globalAlpha = dim ? 0.26 : 1;
+      var img = imgs[n.id];
+      var ready = img && img.complete && img.width > 0;
+      if (n.type === 'cov') {
+        var active = n.level > 0;
+        ctx.beginPath(); hexPath(ctx, n.x, n.y, n.r);
+        ctx.fillStyle = active ? '#0f1822' : '#0b1219'; ctx.fill();
+        if (ready) {
+          ctx.save(); ctx.beginPath(); hexPath(ctx, n.x, n.y, n.r - 2); ctx.clip();
+          ctx.globalAlpha = (dim ? 0.26 : 1) * (active ? 0.95 : 0.4);
+          ctx.drawImage(img, n.x - n.r * 0.82, n.y - n.r * 0.82, n.r * 1.64, n.r * 1.64);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = active ? '#e6c27a' : '#8a97a6';
+          ctx.font = '600 11px "Microsoft YaHei",sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(n.name.slice(0, 2), n.x, n.y);
+        }
+        ctx.beginPath(); hexPath(ctx, n.x, n.y, n.r);
+        ctx.strokeStyle = active ? n.color : 'rgba(150,165,180,0.45)';
+        ctx.lineWidth = active ? 2.4 : 1.2; ctx.stroke();
+        if (active) {
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 6, 0, Math.PI * 2);
+          ctx.strokeStyle = n.color + '30'; ctx.lineWidth = 6; ctx.stroke();
+        }
+        var label = n.count + (active ? ' ✓' : '');
+        ctx.font = '600 10px "Microsoft YaHei",sans-serif';
+        var tw = ctx.measureText(label).width + 10;
+        roundRect(ctx, n.x - tw / 2, n.y + n.r + 3, tw, 15, 7.5);
+        ctx.fillStyle = 'rgba(10,15,21,0.92)'; ctx.fill();
+        ctx.strokeStyle = active ? n.color : 'rgba(150,165,180,0.35)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = active ? n.color : '#8a97a6';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, n.x, n.y + n.r + 11);
+      } else {
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#0d161e'; ctx.fill();
+        if (ready) {
+          ctx.save(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r - 1.5, 0, Math.PI * 2); ctx.clip();
+          ctx.drawImage(img, n.x - n.r, n.y - n.r, n.r * 2, n.r * 2);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = n.color;
+          ctx.font = '700 15px "Microsoft YaHei",sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText((n.name || '?').charAt(0), n.x, n.y + 1);
+        }
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.strokeStyle = n.color; ctx.lineWidth = 2.2; ctx.stroke();
+        ctx.font = '10px "Microsoft YaHei",sans-serif';
+        var nw = ctx.measureText(n.name).width + 10;
+        var ny = n.y + n.r + 3;
+        roundRect(ctx, n.x - nw / 2, ny, nw, 14, 7);
+        ctx.fillStyle = 'rgba(8,12,17,0.88)'; ctx.fill();
+        ctx.fillStyle = dim ? '#55616e' : '#b6c4d3';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(n.name, n.x, ny + 7.5);
+      }
+      ctx.globalAlpha = 1;
+    });
+    ctx.restore();
+  };
+
+  function drawHex(ctx, x, y, r, color, active, alpha) {
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+      var a = Math.PI / 6 + i * Math.PI / 3;
+      var px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = active ? color : 'rgba(30,40,50,' + (0.9 * alpha) + ')';
+    ctx.fill();
+    ctx.strokeStyle = active ? color : 'rgba(120,140,160,' + (0.5 * alpha) + ')';
+    ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  var api = { Graph: Graph, TIER_COLORS: TIER_COLORS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else global.GraphView = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+<script>/* 卫戍协议·配队模拟器 — 界面与交互 */
+(function () {
+  'use strict';
+  var DATA = window.__DATA__;
+  var core = Core.makeCore(DATA);
+  var PALETTE = ['#e6c27a', '#63c6e8', '#a98cf0', '#5fd39a', '#e2605c', '#e0a45e', '#7ec8e3', '#c9a45c', '#8fd6a8', '#d98cc0'];
+  var COLORS = {};
+  core.covenants.forEach(function (c, i) {
+    COLORS[c.name] = c.kind === '核心' ? '#e6c27a' : PALETTE[(i % (PALETTE.length - 1)) + 1];
+  });
+  var TIER_COLORS = GraphView.TIER_COLORS;
+  var AVA = (DATA.avatars || {});
+
+  var S = {
+    field: [], bench: [], elite: {}, pivots: {}, bans: [], locked: {},
+    maxSlots: 8, view: 'graph', search: '', covFilter: null, tierFilter: 0, filterMode: 'tier',
+    autoBench: { on: false, covs: [] },
+    settings: { grav: 1, charge: 1, len: 1, standard: true, litOnly: false, treePending: true },
+    selected: null, archive: false
+  };
+  var undoStack = [];
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, html) { var d = document.createElement(tag); if (cls) d.className = cls; if (html != null) d.innerHTML = html; return d; }
+  // 方案内展示顺序：等阶低的在左、高的在右（同为稳定排序）
+  function teamByTier(names) {
+    return names.slice().sort(function (a, b) {
+      var ta = core.opByName[a] ? (core.opByName[a].tierNum || 0) : 0;
+      var tb = core.opByName[b] ? (core.opByName[b].tierNum || 0) : 0;
+      return ta - tb;
+    });
+  }
+  function snap() { return JSON.stringify({ field: S.field, bench: S.bench, elite: S.elite, pivots: S.pivots, maxSlots: S.maxSlots, archive: S.archive }); }
+  function pushUndo() { undoStack.push(snap()); if (undoStack.length > 80) undoStack.shift(); }
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('show'); }, 1800); }
+
+  function compute() {
+    return core.compute({ field: S.field, bench: S.bench, elite: Object.keys(S.elite).filter(function (k) { return S.elite[k]; }), pivots: S.pivots, bans: S.bans });
+  }
+  var ST = compute();
+
+  function renderHeader() {
+    $('season').textContent = DATA.meta ? DATA.meta.season : '规程';
+    $('stField').textContent = S.field.length + '/' + S.maxSlots;
+    $('stBench').textContent = S.bench.length;
+    $('stLit').textContent = ST.tierCount;
+    $('stRate').textContent = ST.totalRate;
+  }
+
+  var ART = DATA.art || null;
+  // 分享版：头像不打包，按「干员名 → 游戏内 id」映射在线加载（可多镜像重试）
+  function avatarURL(name, i) {
+    if (!ART) return '';
+    var id = ART.avatarIds && ART.avatarIds[name];
+    var bases = ART.bases || [];
+    return id && bases[i] ? bases[i] + id + '.png' : '';
+  }
+  function opAvatar(name, size) {
+    var op = core.opByName[name];
+    var color = TIER_COLORS[((op && op.tierNum) || 1) - 1];
+    var d = el('div');
+    d.style.cssText = 'width:' + size + 'px;height:' + size + 'px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:' + Math.round(size * 0.4) + 'px;color:#0c1116;background:' + color + ';overflow:hidden';
+    function initial() { d.innerHTML = ''; d.textContent = (name || '?')[0]; }
+    var src = AVA[name] || avatarURL(name, 0);
+    if (!src) { initial(); return d; }
+    var im = el('img');
+    im.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    im.loading = 'lazy';
+    im.referrerPolicy = 'no-referrer';
+    var mi = 0;
+    im.onerror = function () {
+      mi++;
+      var next = AVA[name] ? '' : avatarURL(name, mi);
+      if (next) im.src = next; else initial();
+    };
+    im.src = src;
+    d.appendChild(im);
+    return d;
+  }
+
+  function renderSlots() {
+    var wrap = $('slots'); wrap.innerHTML = '';
+    for (var i = 0; i < S.maxSlots; i++) {
+      var name = S.field[i];
+      var slot = el('div', 'slot ' + (name ? 'filled' : 'empty') + (S.selected && S.selected.slot === i ? ' sel' : ''));
+      slot.dataset.slot = String(i);
+      if (name) {
+        var op = core.opByName[name];
+        slot.appendChild(opAvatar(name, 44));
+        slot.appendChild(el('div', 's-nm', name));
+        slot.appendChild(el('div', 's-tags', (op.covs || []).join(' · ')));
+        if (S.elite[name]) slot.appendChild(el('div', 's-elite', '精锐'));
+        if (S.locked[name]) slot.appendChild(el('div', 's-lock', '锁定'));
+        if (S.pivots[name]) slot.appendChild(el('div', 's-elite', '⚙' + S.pivots[name]));
+      }
+      wrap.appendChild(slot);
+    }
+  }
+
+  function renderBench() {
+    var b = $('bench'); b.innerHTML = '';
+    S.bench.forEach(function (name) {
+      var d = el('div', 'b-op');
+      d.dataset.name = name;
+      d.appendChild(opAvatar(name, 62));
+      d.appendChild(el('div', 'b-nm', name));
+      d.addEventListener('click', function () {
+        if (window.__suppressClick) return;
+        pushUndo();
+        S.bench = S.bench.filter(function (n) { return n !== name; });
+        renderAll();
+      });
+      b.appendChild(d);
+    });
+    $('benchHint').textContent = S.bench.length ? '整备区 ' + S.bench.length + ' 人 · 不占场上人数' : '备用干员 · 不占场上人数';
+  }
+
+  function poolMatches(op) {
+    if (op.name === '盟约·辅助干员') return false; // 策略赠送，不出现在候选池
+    if (S.filterMode === 'cov' && S.covFilter && op.covs.indexOf(S.covFilter) < 0) return false;
+    if (S.filterMode === 'tier' && S.tierFilter && op.tierNum !== S.tierFilter) return false;
+    if (S.search && op.name.indexOf(S.search) < 0) return false;
+    return true;
+  }
+
+  function renderPool() {
+    var box = $('pool'); box.innerHTML = '';
+    var ranked = core.rankCandidates(ST, { elite: Object.keys(S.elite), pivots: S.pivots, bans: S.bans });
+    var rankMap = {}; ranked.forEach(function (r, i) { rankMap[r.op] = i; });
+    var list = core.operators.filter(poolMatches).slice().sort(function (a, b) {
+      var ra = rankMap[a.name] == null ? 999 : rankMap[a.name];
+      var rb = rankMap[b.name] == null ? 999 : rankMap[b.name];
+      return ra - rb || a.tierNum - b.tierNum;
+    });
+    $('poolCount').textContent = list.length + ' / ' + (core.operators.length - 1);
+    list.forEach(function (op) {
+      var onField = S.field.indexOf(op.name) >= 0;
+      var d = el('div', 'op' + (onField ? ' on-field' : ''));
+      d.dataset.name = op.name;
+      d.appendChild(opAvatar(op.name, 46));
+      d.appendChild(el('div', 'nm', op.name));
+      var cv = el('div', 'cv');
+      op.covs.filter(function (c) { return c !== '绝技'; }).forEach(function (c) { var i = el('i', null, c); i.style.color = COLORS[c] || '#8a97a6'; cv.appendChild(i); });
+      d.appendChild(cv);
+      var rk = rankMap[op.name] != null ? ranked[rankMap[op.name]] : null;
+      if (rk && rk.dTier > 0) d.appendChild(el('div', 'badge', '点亮' + (rk.litCovs[0] || '')));
+      d.addEventListener('click', function () { if (window.__suppressClick) return; scheduleDetail(op.name); });
+      d.addEventListener('dblclick', function () { cancelDetail(); addOp(op.name); });
+      d.addEventListener('pointerdown', function (e) { startDrag(e, op.name, 'pool'); });
+      d.addEventListener('contextmenu', function (e) { e.preventDefault(); S.locked[op.name] = !S.locked[op.name]; toast(S.locked[op.name] ? '锁定 ' + op.name : '取消锁定 ' + op.name); renderSlots(); });
+      d.addEventListener('pointerenter', function () { hlCovs(op.covs, true); });
+      d.addEventListener('pointerleave', function () { hlCovs(op.covs, false); });
+      box.appendChild(d);
+    });
+  }
+
+  function renderCovenants() {
+    var box = $('covList'); box.innerHTML = '';
+    var shown = core.covenants.filter(function (c) { return (ST.counts[c.name] || 0) > 0 && (!S.settings.litOnly || ST.tiers[c.name].active); });
+    shown.sort(function (a, b) {
+      var aa = ST.tiers[a.name].active ? 1 : 0, ab = ST.tiers[b.name].active ? 1 : 0;
+      var ca = ST.counts[a.name] || 0, cb = ST.counts[b.name] || 0;
+      return ab - aa || cb - ca || a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, 'zh');
+    });
+    if (!shown.length) box.appendChild(el('div', 'empty-tip', '拖入干员后，这里显示相关盟约'));
+    var groups = [['', shown]];
+    groups.forEach(function (g) {
+      if (g[0]) box.appendChild(el('div', 'cov-group', g[0]));
+      g[1].forEach(function (c) {
+        var t = ST.tiers[c.name];
+        var active = t.active;
+        var banned = S.bans.indexOf(c.name) >= 0;
+        var d = el('div', 'cov' + (active ? ' active' : '') + (banned ? ' banned' : '') + (active ? '' : ' dim'));
+        d.style.setProperty('--cc', COLORS[c.name]);
+        d.dataset.cov = c.name;
+        var ico = el('div', 'cov-badge');
+        if (DATA.icons && DATA.icons[c.name]) {
+          var ic = el('img', 'cov-ico');
+          ic.src = DATA.icons[c.name];
+          ico.appendChild(ic);
+        } else ico.textContent = c.name.charAt(0);
+        d.appendChild(ico);
+        var body = el('div', 'cov-body');
+        var row = el('div', 'row1');
+        row.appendChild(el('span', 'nm', c.name));
+        if (c.kind === '附加' && c.countRule !== 'field') row.appendChild(el('span', 'gate', c.countRule === 'field+bench' ? '整备区' : c.countRule === 'elite' ? '精锐' : ''));
+        if (banned) row.appendChild(el('span', 'ban', '禁用'));
+        row.appendChild(el('span', 'cnt', t.count + ' / ' + (t.nextAt == null ? t.at : t.nextAt) + (active ? ' <b>' + t.level + '档</b>' : '')));
+        body.appendChild(row);
+        var bar = el('div', 'bar'); var fill = el('i');
+        var pct = t.nextAt == null ? 100 : Math.min(100, Math.round(t.count / t.nextAt * 100));
+        fill.style.width = pct + '%'; bar.appendChild(fill); body.appendChild(bar);
+        var eff = el('div', 'eff' + (active ? ' on' : ''));
+        eff.textContent = t.level > 0 ? c.tiers[t.level - 1].body : c.tiers[0].body;
+        body.appendChild(eff);
+        var rate = ST.rates[c.name];
+        if (active && (rate.perRound || rate.oneShot)) {
+          body.appendChild(el('div', 'rate', (rate.perRound ? '每回合 +' + rate.perRound + ' 层' : '') + (rate.oneShot ? ' · 单次 +' + rate.oneShot : '')));
+        }
+        if (c.layerGates && c.layerGates.length) body.appendChild(el('div', 'gate', '层数：' + c.layerGates.map(function (x) { return x.label; }).join(' / ')));
+        d.appendChild(body);
+        d.addEventListener('click', function () { S.covFilter = S.covFilter === c.name ? null : c.name; renderCovFilter(); renderPool(); });
+        d.addEventListener('pointerenter', function () { highlightCov(c.name); });
+        d.addEventListener('pointerleave', function () { highlightCov(null); });
+        box.appendChild(d);
+      });
+    });
+    $('covHint').textContent = ST.litCount + ' / 26 已激活';
+  }
+
+  var OPS_COVS = ['远见', '奇迹', '投资人'];
+  function renderCovFilter() {
+    var box = $('covFilter'); if (!box) return;
+    box.innerHTML = '';
+    var all = el('button', 'chip' + (S.covFilter ? '' : ' on'), '全部');
+    all.onclick = function () { S.covFilter = null; renderCovFilter(); renderPool(); };
+    box.appendChild(all);
+    var secs = [
+      ['大盟约', core.covenants.filter(function (c) { return c.kind === '核心'; })],
+      ['小盟约', core.covenants.filter(function (c) { return c.kind === '附加' && OPS_COVS.indexOf(c.name) < 0 && c.name !== '绝技'; })],
+      ['运营盟约', core.covenants.filter(function (c) { return OPS_COVS.indexOf(c.name) >= 0; })]
+    ];
+    secs.forEach(function (s) {
+      box.appendChild(el('div', 'chip-sec', s[0]));
+      s[1].forEach(function (c) {
+        var d = el('button', 'chip ' + (c.kind === '核心' ? 'core' : 'extra') + (S.covFilter === c.name ? ' on' : ''), c.name);
+        d.onclick = function () { S.covFilter = S.covFilter === c.name ? null : c.name; renderCovFilter(); renderPool(); };
+        box.appendChild(d);
+      });
+    });
+  }
+
+  function renderTree() {
+    var box = $('tree'); if (!box) return;
+    box.innerHTML = '';
+    if (!S.field.length) { box.innerHTML = '<div class="empty-tip">还没有干员：先配几个人，这里会画出一棵「第几步点亮了什么」的树</div>'; return; }
+    var W = Math.max(560, box.clientWidth - 36), H = Math.max(360, box.clientHeight - 24);
+    var n = S.field.length;
+    var stepX = n > 1 ? (W - 140) / (n - 1) : 0;
+    var spineY = Math.round(H * 0.62);
+    var svg = [];
+    var litTags = [];
+    var prevLevels = {};
+    var lanes = 0;
+    for (var i = 0; i < n; i++) {
+      var st = core.compute({ field: S.field.slice(0, i + 1), bench: S.bench, elite: Object.keys(S.elite).filter(function (k) { return S.elite[k]; }), pivots: S.pivots, bans: S.bans });
+      Object.keys(st.tiers).forEach(function (cov) {
+        var lv = st.tiers[cov].level, pv = prevLevels[cov] || 0;
+        if (lv > pv) {
+          litTags.push({ cov: cov, level: lv, step: i });
+          prevLevels[cov] = lv;
+          lanes = Math.max(lanes, litTags.filter(function (t) { return t.step === i; }).length);
+        }
+      });
+    }
+    // 每个干员的 x
+    var xs = S.field.map(function (_, i) { return 90 + i * stepX; });
+    // 盟约标签：按首次点亮步归位，纵向错开
+    var usedY = {};
+    litTags.forEach(function (t) {
+      var baseY = spineY - 150;
+      var k = 0;
+      while (usedY[t.step + ':' + k]) k++;
+      usedY[t.step + ':' + k] = 1;
+      t.x = xs[t.step];
+      t.y = baseY - k * 40;
+    });
+    litTags.forEach(function (t) {
+      svg.push('<path d="M' + t.x + ' ' + (spineY - 34) + ' L' + t.x + ' ' + (t.y + 16) + '" stroke="' + COLORS[t.cov] + '" stroke-width="1.2" fill="none" opacity="0.55"/>');
+      var thr = core.covByName[t.cov].tiers[t.level - 1].at;
+      svg.push('<g><rect x="' + (t.x - 46) + '" y="' + t.y + '" width="92" height="26" rx="13" fill="#111a22" stroke="' + COLORS[t.cov] + '" stroke-width="1.1"/>' +
+        '<text x="' + t.x + '" y="' + (t.y + 17) + '" text-anchor="middle" fill="' + COLORS[t.cov] + '" font-size="11.5">' + t.cov + ' ' + thr + '人</text></g>');
+    });
+    // 主轴
+    if (n > 1) svg.push('<line x1="' + xs[0] + '" y1="' + spineY + '" x2="' + xs[n - 1] + '" y2="' + spineY + '" stroke="#2b3946" stroke-width="2"/>');
+    // 干员节点（含头像裁切）
+    var defs = [];
+    S.field.forEach(function (name, i) {
+      var x = xs[i], op = core.opByName[name];
+      var col = TIER_COLORS[(op.tierNum || 1) - 1];
+      if (AVA[name]) {
+        defs.push('<clipPath id="tc' + i + '"><circle cx="' + x + '" cy="' + spineY + '" r="25"/></clipPath>');
+        svg.push('<image href="' + AVA[name] + '" x="' + (x - 25) + '" y="' + (spineY - 25) + '" width="50" height="50" preserveAspectRatio="xMidYMid slice" clip-path="url(#tc' + i + ')"/>');
+      }
+      svg.push('<circle cx="' + x + '" cy="' + spineY + '" r="27" fill="' + (AVA[name] ? 'none' : '#0d141b') + '" stroke="' + col + '" stroke-width="2.5"/>');
+      if (!AVA[name]) svg.push('<text x="' + x + '" y="' + (spineY + 6) + '" text-anchor="middle" fill="#dfe7ef" font-size="16" font-weight="700">' + (name || '?')[0] + '</text>');
+      svg.push('<text x="' + x + '" y="' + (spineY + 47) + '" text-anchor="middle" fill="#aebcc9" font-size="11">' + name + '</text>');
+      svg.push('<text x="' + x + '" y="' + (spineY - 34) + '" text-anchor="middle" fill="#5d6b7a" font-size="10">' + (i + 1) + '</text>');
+    });
+    // 未点亮提示
+    var pending = core.covenants.filter(function (c) { return (ST.counts[c.name] || 0) > 0 && !ST.tiers[c.name].active; });
+    var py = H - 42;
+    if (pending.length && S.settings.treePending) {
+      svg.push('<text x="14" y="' + (py - 10) + '" fill="#6f7d8c" font-size="11">有成员但未点亮：</text>');
+      pending.forEach(function (c, k) {
+        var x = 110 + k * 96;
+        svg.push('<rect x="' + x + '" y="' + (py - 22) + '" width="88" height="24" rx="12" fill="#101820" stroke="#33404e"/>');
+        svg.push('<text x="' + (x + 44) + '" y="' + (py - 6) + '" text-anchor="middle" fill="#7f8d9b" font-size="11">' + c.name + ' ' + (ST.counts[c.name]) + '/' + (ST.tiers[c.name].nextAt == null ? ST.tiers[c.name].at : ST.tiers[c.name].nextAt) + '</text>');
+      });
+    }
+    box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"><defs>' + defs.join('') + '</defs>' + svg.join('') + '</svg>';
+  }
+
+  function renderMatrix() {
+    var box = $('matrix'); box.innerHTML = '';
+    if (!S.field.length) { box.innerHTML = '<div class="empty-tip">还没有干员</div>'; return; }
+    var table = el('table');
+    var thead = el('thead'), tr = el('tr');
+    tr.appendChild(el('th', null, '干员 / 盟约'));
+    var cols = core.covenants.filter(function (c) { return (ST.counts[c.name] || 0) > 0; });
+    if (!cols.length) { box.innerHTML = '<div class="empty-tip">当前配队还没有产生任何盟约人数</div>'; return; }
+    cols.forEach(function (c) { tr.appendChild(el('th', 'rot', c.name)); });
+    thead.appendChild(tr); table.appendChild(thead);
+    var tbody = el('tbody');
+    S.field.forEach(function (name) {
+      var r = el('tr');
+      var td0 = el('td', 'rowname', name); td0.style.width = '64px';
+      r.appendChild(td0);
+      cols.forEach(function (c) {
+        var cell = el('td');
+        cell.style.setProperty('--c', COLORS[c.name]);
+        if (!ST.tiers[c.name].active) cell.classList.add('mute');
+        if (core.opByName[name].covs.indexOf(c.name) >= 0) cell.className += ' hit';
+        if (ST.tiers[c.name].active) cell.classList.add('lit');
+        r.appendChild(cell);
+      });
+      tbody.appendChild(r);
+    });
+    table.appendChild(tbody); box.appendChild(table);
+  }
+
+  var graph = new GraphView.Graph($('graph'));
+  graph.setData(core);
+  function hlCovs(covs, on) {
+    covs.forEach(function (c) {
+      var card = document.querySelector('.cov[data-cov="' + c + '"]');
+      if (card) card.classList.toggle('hl', on);
+      var node = graph.nodes.find(function (n) { return n.type === 'cov' && n.name === c; });
+      if (node) node.hl = on;
+    });
+    graph.draw();
+  }
+
+  function highlightCov(name) {
+    graph.hover = name ? (graph.nodes.find(function (n) { return n.type === 'cov' && n.name === name; }) || null) : null;
+    graph.draw();
+  }
+
+  var drag = null;
+  function startDrag(e, name, from, index) {
+    if (e.button === 2) return;
+    e.preventDefault();
+    drag = { name: name, from: from, index: index == null ? -1 : index, moved: false, ghost: null };
+    var g = el('div', 'drag-ghost', name);
+    g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px';
+    document.body.appendChild(g);
+    drag.ghost = g;
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('pointerup', onDragUp, { once: true });
+  }
+  function onDragMove(e) {
+    if (!drag) return;
+    if (!drag.moved) document.body.classList.add('dragging');
+    drag.moved = true;
+    drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+    document.querySelectorAll('.drag-over').forEach(function (n) { n.classList.remove('drag-over'); });
+    var t = dropTarget(e.clientX, e.clientY);
+    if (t) t.classList.add('drag-over');
+    var tr = $('trash'); if (tr) tr.classList.toggle('hot', !!(t && t.id === 'trash'));
+  }
+  function dropTarget(x, y) {
+    var els = document.elementsFromPoint(x, y);
+    for (var i = 0; i < els.length; i++) {
+      var n = els[i];
+      if (n.id === 'trash') return n;
+      if (n.classList && (n.classList.contains('slot') || n.classList.contains('bench'))) return n;
+    }
+    return null;
+  }
+  function onDragUp(e) {
+    document.removeEventListener('pointermove', onDragMove);
+    if (!drag) return;
+    var t = dropTarget(e.clientX, e.clientY);
+    document.body.classList.remove('dragging');
+    if (drag.ghost) drag.ghost.remove();
+    document.querySelectorAll('.slot.drag-over,.bench.drag-over').forEach(function (n) { n.classList.remove('drag-over'); });
+    var d = drag; drag = null;
+    if (!d.moved) return;
+    window.__suppressClick = true;
+    setTimeout(function () { window.__suppressClick = false; }, 60);
+    if (!t) return;
+    if (t.id === 'trash') { pushUndo(); removeAny(d); renderAll(); toast('已移除 ' + d.name); return; }
+    if (t.classList.contains('bench')) { pushUndo(); toBench(d); renderAll(); return; }
+    var idx = parseInt(t.dataset.slot, 10);
+    pushUndo();
+    toSlot(d, idx);
+    renderAll();
+  }
+
+  function removeAny(d) {
+    if (d.from === 'slot') {
+      if (S.locked[d.name]) { toast('已锁定：先解锁再移除'); return; }
+      S.field = S.field.filter(function (n) { return n !== d.name; });
+      delete S.elite[d.name]; delete S.pivots[d.name];
+    } else if (d.from === 'bench') {
+      var i = d.index >= 0 ? d.index : S.bench.indexOf(d.name);
+      if (i >= 0) S.bench.splice(i, 1);
+    }
+  }
+
+  function toBench(d) {
+    if (d.from === 'bench') return;
+    if (d.from === 'slot') {
+      if (S.locked[d.name]) { toast('已锁定：先解锁再放入整备区'); return; }
+      S.field = S.field.filter(function (n) { return n !== d.name; });
+    }
+    S.bench.push(d.name);
+  }
+
+  function toSlot(d, idx) {
+    var target = S.field[idx];
+    if (d.from === 'slot') {
+      var src = S.field.indexOf(d.name);
+      if (src < 0 || src === idx) return;
+      S.field.splice(src, 1);
+      var ni = idx > src ? idx - 1 : idx;
+      S.field.splice(Math.min(ni, S.field.length), 0, d.name);
+      return;
+    }
+    if (d.from === 'bench') {
+      var bi = d.index >= 0 ? d.index : S.bench.indexOf(d.name);
+      if (bi >= 0) S.bench.splice(bi, 1);
+      if (target && d.name !== target) S.bench.push(target);
+      S.field[idx] = d.name;
+      return;
+    }
+    if (S.field.indexOf(d.name) >= 0) return;
+    S.field[idx] = d.name;
+    S.field = S.field.slice(0, S.maxSlots);
+  }
+
+  function wantsBench(name) {
+    if (!S.autoBench.on) return false;
+    var op = core.opByName[name]; if (!op) return false;
+    return op.covs.some(function (c) { return S.autoBench.covs.indexOf(c) >= 0; });
+  }
+
+  function addOp(name) {
+    if (S.field.indexOf(name) >= 0) { removeFromField(name); return; }
+    if (wantsBench(name)) { pushUndo(); S.bench.push(name); renderAll(); toast(name + ' 已放入整备区'); return; }
+    if (S.field.length >= S.maxSlots) { toast('场上已满（' + S.maxSlots + ' 人），可先放进整备区'); return; }
+    pushUndo(); S.field.push(name); renderAll();
+  }
+  function placeAt(name, idx) {
+    var cur = S.field.indexOf(name);
+    if (cur >= 0) S.field.splice(cur, 1);
+    S.field = S.field.filter(function (n) { return n !== name; });
+    S.field.splice(Math.min(idx, S.field.length), 0, name);
+    S.field = S.field.slice(0, S.maxSlots);
+  }
+  function swapSlot(name, idx) {
+    var from = S.field.indexOf(name);
+    if (from < 0 || from === idx) return;
+    var other = S.field[idx];
+    if (other) { S.field[from] = other; S.field[idx] = name; }
+    else { S.field.splice(from, 1); S.field.splice(Math.min(idx, S.field.length), 0, name); }
+  }
+  function removeFromField(name) {
+    if (S.locked[name]) { toast('已锁定：先右键解锁再移除'); return; }
+    pushUndo();
+    S.field = S.field.filter(function (n) { return n !== name; });
+    delete S.elite[name]; delete S.pivots[name];
+    renderAll();
+  }
+  function addToBench(name) {
+    if (S.locked[name] && S.field.indexOf(name) >= 0) { toast('已锁定：先解锁再放入整备区'); return; }
+    if (S.bench.indexOf(name) >= 0) return;
+    S.field = S.field.filter(function (n) { return n !== name; });
+    S.bench.push(name);
+  }
+
+  var detailTimer = null;
+  function scheduleDetail(name) { clearTimeout(detailTimer); detailTimer = setTimeout(function () { showDetail(name); }, 150); }
+  function cancelDetail() { clearTimeout(detailTimer); }
+  function hideDetail() { $('detail').classList.remove('show'); }
+
+  function showDetail(name) {
+    var op = core.opByName[name]; if (!op) return;
+    var d = $('detail'); d.classList.add('show');
+    var isElite = !!S.elite[name];
+    var html = '<h3>' + name + ' <span style="font-size:11px;color:#8a97a6">' + op.tier + '阶 · ' + (op.traitType || '') + '</span></h3>';
+    html += '<div class="k">盟约</div><div class="t">' + op.covs.map(function (c) { return '<b style="color:' + COLORS[c] + '">' + c + '</b>'; }).join(' · ') + '</div>';
+    html += '<div class="k">特质（' + (isElite ? '精锐' : '初始') + '）</div><div class="t">' + (isElite ? op.trait2 : op.trait1) + '</div>';
+    if (isElite && op.trait1) html += '<div class="k">初始档</div><div class="t" style="opacity:.55">' + op.trait1 + '</div>';
+    html += '<div class="k">快捷操作</div><div class="d-actions"></div>';
+    d.innerHTML = html;
+    var sel = document.createElement('select');
+    sel.className = 'pivotSel';
+    var o0 = document.createElement('option');
+    o0.value = ''; o0.textContent = '变形同构体：无';
+    sel.appendChild(o0);
+    core.covenants.forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = c.name; o.textContent = '变形同构体 → ' + c.name;
+      if (S.pivots[name] === c.name) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () {
+      pushUndo();
+      if (this.value) S.pivots[name] = this.value; else delete S.pivots[name];
+      if (this.value) toast(name + ' 视为【' + this.value + '】成员');
+      renderAll();
+    };
+    d.appendChild(sel);
+    var acts = d.querySelector('.d-actions');
+    if (acts) {
+      var bElite = el('button', 'btn' + (S.elite[name] ? ' on' : ''), S.elite[name] ? '精锐 ✓' : '切精锐');
+      bElite.onclick = function () { pushUndo(); S.elite[name] = !S.elite[name]; renderAll(); showDetail(name); };
+      var bLock = el('button', 'btn' + (S.locked[name] ? ' on' : ''), S.locked[name] ? '已锁定' : '锁定');
+      bLock.onclick = function () { S.locked[name] = !S.locked[name]; renderAll(); showDetail(name); };
+      var onField = S.field.indexOf(name) >= 0, onBench = S.bench.indexOf(name) >= 0;
+      var bDel = el('button', 'btn', onField ? '移出配队' : onBench ? '移出整备区' : '加入场上');
+      bDel.onclick = function () {
+        if (onField) { removeFromField(name); hideDetail(); return; }
+        if (onBench) { pushUndo(); S.bench.splice(S.bench.indexOf(name), 1); renderAll(); hideDetail(); return; }
+        pushUndo(); if (S.field.length < S.maxSlots) S.field.push(name); else { S.bench.push(name); toast('场上已满，已放入整备区'); } renderAll(); showDetail(name);
+      };
+      [bElite, bLock, bDel].forEach(function (b) { acts.appendChild(b); });
+      if (!onField && !onBench) {
+        var bBench = el('button', 'btn', '加入整备区');
+        bBench.onclick = function () { pushUndo(); S.bench.push(name); renderAll(); showDetail(name); };
+        acts.appendChild(bBench);
+      }
+    }
+  }
+
+  function renderTierFilter() {
+    var box = $('tierFilter');
+    if (!box) return;
+    box.innerHTML = '';
+    [0, 1, 2, 3, 4, 5, 6].forEach(function (t) {
+      var b = el('button', 'chip tier' + (S.tierFilter === t ? ' on' : ''), t ? core.TIER_NAMES[t - 1] : '全部');
+      b.onclick = function () { S.tierFilter = t; renderTierFilter(); renderPool(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderAll() {
+    ST = compute();
+    renderHeader(); renderSlots(); renderBench(); renderPool(); renderCovenants(); renderMatrix(); renderTierFilter();
+    var eh = $('emptyHint'); if (eh) eh.style.display = S.field.length ? 'none' : 'flex';
+    if (S.view === 'graph') graph.update(ST);
+    if (S.view === 'tree') renderTree();
+    save();
+  }
+
+  var KEY = 'garrison-sim-v1';
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ field: S.field, bench: S.bench, elite: S.elite, pivots: S.pivots, bans: S.bans, maxSlots: S.maxSlots, archive: S.archive, autoBench: S.autoBench, settings: S.settings })); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY); if (!raw) return;
+      var o = JSON.parse(raw);
+      S.field = (o.field || []).filter(function (n) { return core.opByName[n]; });
+      S.bench = (o.bench || []).filter(function (n) { return core.opByName[n]; });
+      S.elite = o.elite || {}; S.pivots = o.pivots || {}; S.bans = o.bans || [];
+      S.maxSlots = o.maxSlots === 9 ? 9 : 8; S.archive = !!o.archive;
+      if (o.autoBench) S.autoBench = { on: !!o.autoBench.on, covs: o.autoBench.covs || [] };
+      if (o.settings) {
+        ['grav', 'charge', 'len'].forEach(function (k) { if (typeof o.settings[k] === 'number') S.settings[k] = o.settings[k]; });
+        S.settings.standard = o.settings.standard !== false;
+        S.settings.litOnly = !!o.settings.litOnly;
+        S.settings.treePending = o.settings.treePending !== false;
+      }
+    } catch (e) {}
+  }
+
+  var solveTargets = {};
+  function buildSolveTags() {
+    var coreBox = $('tagCore'), extraBox = $('tagExtra');
+    coreBox.innerHTML = ''; extraBox.innerHTML = '';
+    core.covenants.forEach(function (c) {
+      var box = c.kind === '核心' ? coreBox : extraBox;
+      var btn = el('button', 'tag', c.name);
+      btn.dataset.cov = c.name;
+      btn.onclick = function () { cycleTarget(c, btn); };
+      box.appendChild(btn);
+    });
+  }
+  function syncTags() {
+    document.querySelectorAll('.tag').forEach(function (t) {
+      var cov = t.dataset.cov, at = solveTargets[cov], c = core.covByName[cov];
+      var last = c.tiers[c.tiers.length - 1].at;
+      t.className = 'tag' + (at ? (at === last ? ' lv2' : ' lv1') : '');
+      t.textContent = cov + (at ? ' ' + at : '');
+    });
+  }
+  // 一键配队流程：打开求解器时，若还没选目标，就按当前阵容已点亮的盟约与档位预填
+  function prefillTargets() {
+    if (Object.keys(solveTargets).length) return;
+    var lit = core.covenants.filter(function (c) { return ST.tiers[c.name].active && !ST.tiers[c.name].banned; });
+    lit.slice(0, 4).forEach(function (c) {
+      var lv = ST.tiers[c.name].level;
+      if (lv > 0) solveTargets[c.name] = c.tiers[Math.min(lv, c.tiers.length) - 1].at;
+    });
+  }
+  function cycleTarget(c, btn) {
+    var ats = c.tiers.map(function (t) { return t.at; });
+    var cur = solveTargets[c.name] || 0;
+    var idx = ats.indexOf(cur);
+    var next = idx + 1 >= ats.length ? 0 : ats[idx + 1];
+    if (next) solveTargets[c.name] = next; else delete solveTargets[c.name];
+    syncTags();
+    btn.className = 'tag' + (next ? (next === ats[ats.length - 1] ? ' lv2' : ' lv1') : '');
+    btn.textContent = c.name + (next ? ' ' + next : '');
+  }
+  function runSolve() {
+    var targets = Object.keys(solveTargets).map(function (k) { return { cov: k, at: solveTargets[k] }; });
+    if (!targets.length) { toast('先选至少一个盟约档位'); return; }
+    var maxSize = $('optArchive').checked ? 9 : 8;
+    var pivotOn = $('optPivot').checked;
+    var pivotBudget = pivotOn ? Math.max(0, Math.min(3, parseInt($('pivotCount').value, 10) || 0)) : 0;
+    var locked = $('optLocked').checked ? S.field.slice() : [];
+    if (locked.length > maxSize) { toast('场上人数超过上限'); return; }
+    var strict = $('optStrict') ? $('optStrict').checked : false;
+    var harmony = $('optHarmony') ? $('optHarmony').checked : true;
+    var sortMode = $('optSort') ? $('optSort').value : 'cov';
+    var t0 = performance.now();
+    var r = Solver.solve(core, {
+      targets: targets, maxSize: maxSize, bans: S.bans, locked: locked, pivotBudget: pivotBudget,
+      elite: Object.keys(S.elite).filter(function (k) { return S.elite[k]; }),
+      bench: S.bench, strict: strict, harmony: harmony, sortMode: sortMode
+    });
+    var ms = Math.round(performance.now() - t0);
+    window.__LAST_SOLVE__ = r;
+    $('solveStat').textContent = '用时 ' + ms + 'ms · 搜索 ' + (r.searched || 0) + ' 名候选 · ' + r.solutions.length + ' 个方案（每种人数显示前 12 套）' + (strict ? ' · 严格模式' : '') + (harmony ? ' · 允许魔王' : ' · 不带魔王') + (sortMode === 'tier' ? ' · 等阶优先' : ' · 盟约优先') + (r.truncated ? ' · 已达上限' : '');
+    var box = $('results'); box.innerHTML = '';
+    if (!r.solutions.length) { box.innerHTML = '<div class="empty-tip">' + (r.note || '没有满足条件的配队，试试降低档位或取消 BAN') + '</div>'; return; }
+    var perSize = {};
+    var shown = r.solutions.filter(function (s) { perSize[s.size] = (perSize[s.size] || 0) + 1; return perSize[s.size] <= 12; });
+    shown.forEach(function (sol) {
+      var d = el('div', 'res');
+      var top = el('div', 'top');
+      top.appendChild(el('span', 'size', sol.size + ' 人'));
+      top.appendChild(el('span', 'stat', '总等阶 ' + (sol.totalTier || 0)));
+      top.appendChild(el('span', 'stat', '激活 ' + (sol.litCount || 0) + ' 盟约'));
+      top.appendChild(el('span', 'stat', '点亮 ' + sol.tierCount + ' 档'));
+      if (sol.extraTiers > 0) top.appendChild(el('span', 'stat', '额外 ' + sol.extraTiers + ' 档'));
+      if (sol.totalRate) top.appendChild(el('span', 'stat', '每回合 +' + sol.totalRate + ' 层'));
+      var piv = Object.keys(sol.pivots || {}).length;
+      if (piv) top.appendChild(el('span', 'stat', '变形同构体 ' + piv));
+      if (sol.elite && sol.elite.length) top.appendChild(el('span', 'stat', '精锐 ' + sol.elite.length));
+      if (sol.bench && sol.bench.length) top.appendChild(el('span', 'stat', '整备区 ' + sol.bench.length + ' 人'));
+      var load = el('button', 'btn', '载入'); load.style.marginLeft = 'auto';
+      load.onclick = function () { applyTeam(sol); };
+      top.appendChild(load);
+      var main = el('div', 'resmain');
+      main.appendChild(top);
+      var team = el('div', 'team');
+      teamByTier(sol.team).forEach(function (n) {
+        var m = el('div', 'mini');
+        var dot = el('span', 'd'); dot.style.background = TIER_COLORS[(core.opByName[n].tierNum || 1) - 1];
+        m.appendChild(dot); m.appendChild(document.createTextNode(n));
+        if (sol.pivots && sol.pivots[n]) { var p = el('span', null, '⚙'); p.style.color = '#e6c27a'; m.appendChild(p); }
+        team.appendChild(m);
+      });
+      main.appendChild(team);
+      d.appendChild(main);
+      d.appendChild(covIconRow(sol));
+      box.appendChild(d);
+    });
+    $('solveInfo').textContent = r.note || '';
+  }
+  function litCovs(sol) {
+    var arr = [];
+    core.covenants.forEach(function (c) {
+      var t = sol.state && sol.state.tiers[c.name];
+      if (t && t.active) arr.push({ name: c.name, level: t.level });
+    });
+    arr.sort(function (a, b) { return b.level - a.level || a.name.localeCompare(b.name, 'zh'); });
+    return arr;
+  }
+  function covIconRow(sol) {
+    var row = el('div', 'covs');
+    litCovs(sol).forEach(function (x) {
+      var w = el('span', 'covic');
+      w.title = x.name + ' · ' + x.level + ' 档';
+      if (DATA.icons && DATA.icons[x.name]) { var im = el('img'); im.src = DATA.icons[x.name]; im.alt = x.name; w.appendChild(im); }
+      else w.appendChild(document.createTextNode(x.name));
+      var b = el('b', null, String(x.level)); w.appendChild(b);
+      row.appendChild(w);
+    });
+    return row;
+  }
+  function applyTeam(sol) {
+    pushUndo();
+    S.field = teamByTier(sol.team).slice(0, S.maxSlots);
+    S.pivots = {};
+    Object.keys(sol.pivots || {}).forEach(function (n) { S.pivots[n] = sol.pivots[n]; });
+    S.elite = {};
+    (sol.elite || []).forEach(function (n) { S.elite[n] = 1; });
+    if (sol.bench) S.bench = sol.bench.slice();
+    renderAll();
+    $('solverOverlay').classList.remove('show');
+    toast('已载入 ' + sol.size + ' 人配队');
+  }
+
+  var WIZ = { step: 1, targets: {}, results: [] };
+
+  // 设置页示意小图：直接复用正式图谱的 Graph 实现，参数与主图共享
+  var prevGraph = null;
+  function mountPreview(box) {
+    var cv = document.createElement('canvas');
+    cv.className = 'opt-preview';
+    box.appendChild(cv);
+    var g = null;
+    try {
+      g = new GraphView.Graph(cv);
+      g.setPreview({
+        covs: ['乌萨斯', '精准', '聚合'],
+        ops: ['折桠', '烈夏', '真理', '乌啾', '灰喉', '迷迭香'],
+        links: [['折桠', '乌萨斯'], ['烈夏', '乌萨斯'], ['真理', '乌萨斯'],
+                ['乌啾', '乌萨斯'], ['乌啾', '聚合'], ['灰喉', '精准'], ['迷迭香', '精准']]
+      }, S.settings);
+      // 弹层刚插入时 canvas 还没完成布局，等下一帧再按实际尺寸重排一次
+      prevGraph = g;
+      var fit = function () { if (!g) return; g.resize(); g.setParams(S.settings); };
+      requestAnimationFrame(fit);
+      if (window.ResizeObserver) new ResizeObserver(fit).observe(cv);
+    } catch (e) { console.error('preview', e); }
+  }
+
+  function openOptions() {
+    $('optOverlay').classList.add('show');
+    buildOptions();
+  }
+  function applyGraphSettings() {
+    if (graph && graph.setParams) graph.setParams(S.settings);
+    if (prevGraph) prevGraph.setParams(S.settings);
+  }
+
+  function oRow(labelText, checked, onChange, hint) {
+    var row = el('div', 'opt-row');
+    var lab = el('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = !!checked;
+    cb.onchange = function () { onChange(this.checked); };
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(labelText));
+    row.appendChild(lab);
+    if (hint) row.appendChild(el('span', 'hint', hint));
+    return row;
+  }
+
+  function oSlider(name, key, min, max, step, desc) {
+    var row = el('div', 'opt-slider');
+    row.appendChild(el('span', null, name));
+    var inp = document.createElement('input');
+    inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step; inp.value = S.settings[key];
+    var val = el('span', 'val', (+S.settings[key]).toFixed(1));
+    inp.oninput = function () {
+      S.settings[key] = parseFloat(this.value);
+      val.textContent = (+this.value).toFixed(1);
+      applyGraphSettings(); save();
+    };
+    row.appendChild(inp); row.appendChild(val);
+    row.appendChild(el('div', 'desc', desc));
+    return row;
+  }
+
+  function buildOptions() {
+    var b = $('optBody'); if (!b) return;
+    b.innerHTML = '';
+    var s1 = el('div', 'opt-sec');
+    s1.appendChild(el('h4', null, '配队区'));
+    s1.appendChild(oRow('人事部档案（场上上限 9）', S.maxSlots === 9, function (v) {
+      S.archive = v; S.maxSlots = v ? 9 : 8;
+      if (S.field.length > S.maxSlots) S.field = S.field.slice(0, S.maxSlots);
+      renderAll();
+    }, '需要「人事部档案」道具时开启'));
+    b.appendChild(s1);
+
+    var s2 = el('div', 'opt-sec');
+    s2.appendChild(el('h4', null, '干员栏'));
+    s2.appendChild(oRow('自动整备', S.autoBench.on, function (v) { S.autoBench.on = v; save(); }, '勾选下列盟约后，带该盟约的干员被加入时直接进整备区'));
+    var checks = el('div', 'opt-checks');
+    ['远见', '奇迹', '投资人', '助力'].forEach(function (c) {
+      var lab = el('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = S.autoBench.covs.indexOf(c) >= 0;
+      cb.onchange = function () {
+        var i = S.autoBench.covs.indexOf(c);
+        if (this.checked && i < 0) S.autoBench.covs.push(c);
+        if (!this.checked && i >= 0) S.autoBench.covs.splice(i, 1);
+        save();
+      };
+      lab.appendChild(cb); lab.appendChild(document.createTextNode(c));
+      checks.appendChild(lab);
+    });
+    s2.appendChild(checks);
+    b.appendChild(s2);
+
+    var s3 = el('div', 'opt-sec');
+    s3.appendChild(el('h4', null, '盟约栏'));
+    s3.appendChild(oRow('只显示已点亮的盟约', S.settings.litOnly, function (v) { S.settings.litOnly = v; save(); renderCovenants(); }, '关闭时，有成员但未点亮的盟约也会灰化显示'));
+    b.appendChild(s3);
+
+    var s4 = el('div', 'opt-sec');
+    s4.appendChild(el('h4', null, '配队树'));
+    s4.appendChild(oRow('显示「有成员但未点亮」的盟约', S.settings.treePending, function (v) { S.settings.treePending = v; save(); renderTree(); }));
+    b.appendChild(s4);
+
+    var s5 = el('div', 'opt-sec');
+    s5.appendChild(el('h4', null, '关系图谱'));
+    s5.appendChild(oRow('使用标准结构布局', S.settings.standard, function (v) {
+      S.settings.standard = v; applyGraphSettings(); save();
+    }, '开：初始按环形锚点铺开，整体更规整；关：随机铺开，让节点自己长成最终的形状'));
+    s5.appendChild(oSlider('引力', 'grav', 0.2, 3, 0.1, '向心力：把整个图谱的质心拉回画布中心的强度。太小会漂出视野，太大则全挤向中间。'));
+    s5.appendChild(oSlider('斥力', 'charge', 0, 2, 0.1, '节点之间互相推开的强度。越大越分散、间距越大。'));
+    s5.appendChild(oSlider('边长', 'len', 0.4, 2.2, 0.1, '干员与盟约之间连线的理想长度。越大连线越长、图越舒展。'));
+    s5.appendChild(el('div', 'opt-preview-note', '下面是用同一套受力规则的示意小图，拖动滑杆可实时看到变化（3 个大节点 + 6 个小节点）：'));
+    mountPreview(s5);
+    b.appendChild(s5);
+  }
+
+  function openWizard() { WIZ.step = 1; WIZ.targets = {}; WIZ.results = []; renderWizard(); $('wizardOverlay').classList.add('show'); }
+
+  function wizCard(c) {
+    var ats = c.tiers.map(function (t) { return t.at; });
+    var cur = WIZ.targets[c.name] || 0;
+    var d = el('div', 'wcard' + (cur ? ' on' : ''));
+    if (DATA.icons && DATA.icons[c.name]) { var im = el('img'); im.src = DATA.icons[c.name]; d.appendChild(im); }
+    var box = el('div');
+    box.appendChild(el('div', 'nm', c.name));
+    box.appendChild(el('div', 'ts', ats.join(' / ') + ' 人激活'));
+    d.appendChild(box);
+    d.appendChild(el('span', 'lv', cur ? cur + ' 档' : ''));
+    d.onclick = function () {
+      var idx = ats.indexOf(cur);
+      var next = idx + 1 >= ats.length ? 0 : ats[idx + 1];
+      if (next) WIZ.targets[c.name] = next; else delete WIZ.targets[c.name];
+      renderWizard();
+    };
+    return d;
+  }
+
+  function renderWizard() {
+    $('wizStep').textContent = '第 ' + WIZ.step + ' 步 / 共 3 步';
+    $('wizPrev').style.visibility = WIZ.step === 1 ? 'hidden' : 'visible';
+    $('wizNext').textContent = WIZ.step === 3 ? '重新计算' : '下一步';
+    var b = $('wizBody'); b.innerHTML = '';
+    if (WIZ.step < 3) {
+      var kind = WIZ.step === 1 ? '核心' : '附加';
+      b.appendChild(el('div', 'wsec', WIZ.step === 1 ? '第 1 步：选择你想玩的核心盟约体系（点一次 = 3 档，再点 = 6 档，第三次取消）' : '第 2 步：选择想点亮的附加盟约（可跳过）'));
+      var grid = el('div', 'wgrid');
+      core.covenants.filter(function (c) { return c.kind === kind; }).forEach(function (c) { grid.appendChild(wizCard(c)); });
+      b.appendChild(grid);
+      $('wizTip').textContent = WIZ.step === 1 ? '已选 ' + Object.keys(WIZ.targets).length + ' 条' : '已选 ' + Object.keys(WIZ.targets).length + ' 条，下一步出方案';
+    } else {
+      var targets = Object.keys(WIZ.targets).map(function (k) { return { cov: k, at: WIZ.targets[k] }; });
+      if (!targets.length) { b.appendChild(el('div', 'empty-tip', '还没有选任何盟约，先返回上一步选目标')); $('wizTip').textContent = ''; return; }
+      if (!WIZ.results.length) {
+        var r = Solver.solve(core, { targets: targets, maxSize: S.maxSlots, bans: S.bans, pivotBudget: 0 });
+        WIZ.results = r.solutions.slice(0, 10);
+        WIZ.note = r.note;
+      }
+      if (!WIZ.results.length) { b.appendChild(el('div', 'empty-tip', WIZ.note || '没有满足条件的配队，试试降低档位或减少目标')); $('wizTip').textContent = ''; return; }
+      b.appendChild(el('div', 'wsec', '第 3 步：这些配队能满足你的目标，按人数从少到多'));
+      WIZ.results.forEach(function (sol) {
+        var d = el('div', 'wres');
+        var top = el('div', 'top');
+        top.appendChild(el('span', null, '<b style="color:var(--gold)">' + sol.size + ' 人</b>'));
+        top.appendChild(el('span', null, '点亮 ' + sol.tierCount + ' 档'));
+        if (sol.totalTier) top.appendChild(el('span', null, '总等阶 ' + sol.totalTier));
+        if (sol.totalRate) top.appendChild(el('span', null, '每回合 +' + sol.totalRate + ' 层'));
+        var load = el('button', 'btn', '载入');
+        load.style.marginLeft = 'auto';
+        load.onclick = function () {
+          pushUndo();
+          S.field = teamByTier(sol.team).slice(0, S.maxSlots);
+          S.pivots = {};
+          Object.keys(sol.pivots || {}).forEach(function (n) { S.pivots[n] = sol.pivots[n]; });
+          renderAll();
+          $('wizardOverlay').classList.remove('show');
+          toast('已载入 ' + sol.size + ' 人配队');
+        };
+        top.appendChild(load);
+        d.appendChild(top);
+        var team = el('div', 'team');
+        teamByTier(sol.team).forEach(function (n) {
+          var m = el('div', 'mini');
+          var dot = el('span', 'd'); dot.style.background = TIER_COLORS[(core.opByName[n].tierNum || 1) - 1]; m.appendChild(dot);
+          m.appendChild(document.createTextNode(n));
+          team.appendChild(m);
+        });
+        d.appendChild(team);
+        b.appendChild(d);
+      });
+      $('wizTip').textContent = '共 ' + WIZ.results.length + ' 套方案';
+    }
+  }
+
+  var HELP = [
+    '<h4>配队操作</h4>',
+    '<ul>',
+    '<li><b>双击</b>左侧候选干员：加入场上（场上有则移回候选）。</li>',
+    '<li><b>双击</b>场上或整备区的干员：移除。</li>',
+    '<li><b>单击</b>任意干员：打开详情（延迟 260ms，所以不会和双击冲突），详情里可设置变形同构体、切精锐、锁定。</li>',
+    '<li><b>拖拽</b>：候选池 / 场上 / 整备区之间互相移动；拖到已占用的格子即替换。</li>',
+    '<li>拖动时顶部会出现<b>红色删除区</b>，拖进去即移除。</li>',
+    '<li><b>Shift + 单击</b>：切换初始 / 精锐（精锐用第二档特质，影响层数增速与绝技计数）。</li>',
+    '<li><b>右键</b>场上干员或候选卡：锁定 / 解锁（求解时保留）。</li>',
+    '<li><b>Delete</b>：移除上次点选的干员；<b>Ctrl/⌘ + Z</b> 或顶栏 ↶：撤销。</li>',
+    '<li>拖到<b>整备区</b>：放入替补席，不占场上人数，但会计入远见 / 奇迹 / 投资人。</li>',
+    '<li>顶栏<b>人事部档案</b>：场上上限 8 → 9。</li>',
+    '<li>顶栏<b>选项</b>：自动整备（远见/奇迹/投资人/助力 直接进整备区）、场上人数、盟约栏过滤、配队树开关、图谱的引力/斥力/边长与标准结构布局，都集中在这里。</li>',
+    '</ul>',
+    '<h4>盟约规则</h4>',
+    '<ul>',
+    '<li><b>双档激活</b>：核心盟约 3 人 / 6 人两档；附加盟约 2/3、2/5、3、2、1 不等。</li>',
+    '<li><b>层数</b>：效果常写成「+23% + 0.9×层数」。本工具只计算「每回合增速」与「单次收益」，不承诺绝对层数（取决于回合数、装备与策略）。</li>',
+    '<li><b>调和</b>：激活时使所有核心盟约激活人数 +1。</li>',
+    '<li><b>独行</b>：只有恰好 1 名独行干员时生效。</li>',
+    '<li><b>绝技</b>：统计的是精锐状态的干员数，不是绝技成员数。</li>',
+    '<li><b>远见 / 奇迹 / 投资人</b>：整备区的成员也计入。</li>',
+    '<li><b>协防干员</b>：阵营被禁（BAN）时的兜底盟约。</li>',
+    '<li><b>卡西米尔 6 档</b>：依赖整备区最右侧的卡西米尔干员。</li>',
+    '</ul>',
+    '<h4>求解器</h4>',
+    '<ul>',
+    '<li>核心盟约点一次 = 3 档，再点 = 6 档，第三次取消；附加盟约同理循环。</li>',
+    '<li>结果按<b>人数升序</b>排列，同人数按附带点亮档位、层数增速排序；每种人数最多显示 12 套。</li>',
+    '<li>可勾选<b>人事部档案</b>（9 人）、<b>使用变形同构体</b>并指定数量（N=0 时完全不计转职，搜索空间更小）。</li>',
+    '<li><b>严格模式</b>：只允许点亮你勾选的目标盟约，且档位与目标完全一致（不多不少）；调和、独行等附带点亮也算「多」。</li>',
+    '<li><b>队伍中允许魔王</b>：魔王是真实单位，占 1 个上场位，入队后调和生效（所有核心盟约 +1 人）。默认允许求解器把魔王编入队伍；取消勾选则完全不考虑调和。策略赠送的「盟约·辅助干员」不会出现在候选池。</li>',
+    '<li><b>排序</b>：默认「激活盟约优先」，人数相同先比激活盟约数，再比总等阶、每回合叠层；「棋子等阶优先」则先比总等阶。两种口径各有取舍，可按自己的偏好切换。</li>',
+    '<li>求解会补上规则：调和让核心盟约少 1 人、独行至多 1 人、绝技自动按精锐计算、远见/奇迹/投资人计入整备区、协防干员按被 BAN 阵营兜底。</li>',
+    '<li>顶栏<b>本局禁用</b>：禁用的盟约不能作为目标，相关干员会降权。</li>',
+    '</ul>',
+    '<h4>变形同构体</h4>',
+    '<ul>',
+    '<li>装备「盟约特色道具 + 变形同构体」后，干员被视为某个盟约的成员。</li>',
+    '<li>本工具建模为<b>额外计入</b>目标盟约（原生盟约保留），图上以金色虚线边表示。</li>',
+    '<li>求解时只在「某盟约差 1 人」时尝试补位，并受数量上限约束。</li>',
+    '</ul>',
+    '<h4 id="helpNotice">版权与使用限制</h4>',
+    '<ul>',
+    '<li><b>非官方</b>：本工具由玩家制作，与上海鹰角网络科技有限公司及其关联公司无关，不代表官方立场，也不含任何自动化、外挂、破解或修改游戏客户端的功能。</li>',
+    '<li><b>素材版权</b>：《明日方舟 / Arknights》的游戏数据、干员名称、立绘头像、技能与盟约文本版权归上海鹰角网络科技有限公司所有；本工具仅作非商业的学习交流展示。</li>',
+    '<li><b>数据来源</b>：干员名单、盟约人数与效果文本整理自 PRTS（https://prts.wiki/，站点内容 CC BY-NC-SA 4.0），阈值与文案与 NGA 解包整理帖交叉校验；对 PRTS 内容的再整理（data/operators.json、data/covenants.json）同样以 CC BY-NC-SA 4.0 提供。</li>',
+    '<li><b>不收费</b>：本工具不收费、不投放广告、不接收捐赠，也不通过任何形式变现。</li>',
+    '<li><b>分享版与完整版</b>：公开传播的分享版不打包任何官方美术资源，头像由浏览器从第三方公开图源在线加载；完整版内联的头像与图标仅限个人自用，请勿公开传播或二次分发。</li>',
+    '<li><b>下架承诺</b>：如权利人认为本工具或页面内容侵犯其权益，请通过发布页面联系作者；作者将在收到通知后立即移除相关内容并下架，不设置任何对抗性条件。</li>',
+    '</ul>',
+    '<div class="help-note">继续使用即表示你理解：本工具不提供任何官方授权，素材权利归原权利人所有。</div>'
+  ].join('');
+
+  function openHelp(scrollEnd) {
+    $('helpBody').innerHTML = HELP;
+    $('helpOverlay').classList.add('show');
+    if (scrollEnd) setTimeout(function () { var b = $('helpBody'); if (b) b.scrollTop = b.scrollHeight; }, 40);
+  }
+
+  function bindEvents() {
+    $('search').addEventListener('input', function (e) { S.search = e.target.value.trim(); renderPool(); });
+    $('btnUndo').onclick = function () {
+      var s = undoStack.pop(); if (!s) return;
+      var o = JSON.parse(s); S.field = o.field; S.bench = o.bench; S.elite = o.elite; S.pivots = o.pivots; S.maxSlots = o.maxSlots;
+      renderAll();
+    };
+    $('btnClear').onclick = function () { pushUndo(); S.field = []; S.bench = []; S.elite = {}; S.pivots = {}; renderAll(); };
+    $('btnBan').onclick = function () { openBanDialog(); };
+    $('btnSave').onclick = function () { save(); toast('已保存到本地'); };
+    $('btnSolve').onclick = function () { prefillTargets(); syncTags(); $('solverOverlay').classList.add('show'); };
+    $('closeSolver').onclick = function () { $('solverOverlay').classList.remove('show'); };
+    $('runSolve').onclick = runSolve;
+    $('optPivot').onchange = function () { $('pivotCount').disabled = !this.checked; };
+    $('btnOptions').onclick = openOptions;
+    $('closeOpt').onclick = function () {
+      $('optOverlay').classList.remove('show');
+      prevGraph = null;
+    };
+    $('btnWizard').onclick = openWizard;
+    $('closeWizard').onclick = function () { $('wizardOverlay').classList.remove('show'); };
+    $('wizPrev').onclick = function () { if (WIZ.step > 1) { WIZ.step--; if (WIZ.step < 3) WIZ.results = []; renderWizard(); } };
+    $('wizNext').onclick = function () {
+      if (WIZ.step < 3) { WIZ.step++; if (WIZ.step === 3) WIZ.results = []; renderWizard(); }
+      else { WIZ.results = []; renderWizard(); }
+    };
+    $('btnHelp').onclick = function () { openHelp(false); };
+    if ($('btnNotice')) $('btnNotice').onclick = function () { openHelp(true); };
+    $('closeHelp').onclick = function () { $('helpOverlay').classList.remove('show'); };
+    document.querySelectorAll('.fmode').forEach(function (b) {
+      b.onclick = function () {
+        S.filterMode = b.dataset.mode;
+        document.querySelectorAll('.fmode').forEach(function (x) { x.classList.toggle('on', x === b); });
+        $('tierFilter').style.display = S.filterMode === 'tier' ? 'flex' : 'none';
+        $('covFilter').style.display = S.filterMode === 'cov' ? 'flex' : 'none';
+        renderPool();
+      };
+    });
+    $('btnShare').onclick = function () {
+      var u = location.href.split('#')[0] + '#t=' + encodeURIComponent(S.field.join(',')) + (S.bench.length ? '&b=' + encodeURIComponent(S.bench.join(',')) : '');
+      var done = function () { toast('配队码已复制到剪贴板'); };
+      if (navigator.clipboard) navigator.clipboard.writeText(u).then(done, function () { prompt('复制这条链接：', u); });
+      else prompt('复制这条链接：', u);
+    };
+    $('btnPng').onclick = function () {
+      try {
+        var a = document.createElement('a');
+        a.download = '卫戍配队图谱.png';
+        a.href = document.getElementById('graph').toDataURL('image/png');
+        a.click(); toast('已导出图谱');
+      } catch (e) { toast('导出失败'); }
+    };
+    document.querySelectorAll('.gtab').forEach(function (b) {
+      b.onclick = function () {
+        document.querySelectorAll('.gtab').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        S.view = b.dataset.view;
+        $('graph').style.display = S.view === 'graph' ? 'block' : 'none';
+        $('matrix').style.display = S.view === 'matrix' ? 'block' : 'none';
+        $('tree').style.display = S.view === 'tree' ? 'block' : 'none';
+        if (S.view === 'graph') { graph.resize(); graph.update(ST); }
+        if (S.view === 'tree') renderTree();
+      };
+    });
+    $('slots').addEventListener('click', function (e) {
+      var slot = e.target.closest('.slot'); if (!slot) return;
+      var idx = parseInt(slot.dataset.slot, 10);
+      var name = S.field[idx]; if (!name) return;
+      if (window.__suppressClick) return;
+      if (e.shiftKey) { pushUndo(); S.elite[name] = !S.elite[name]; renderAll(); toast(S.elite[name] ? name + ' 转为精锐' : name + ' 回到初始'); return; }
+      S.selected = { slot: idx, name: name };
+      scheduleDetail(name);
+    });
+    $('slots').addEventListener('dblclick', function (e) {
+      var slot = e.target.closest('.slot'); if (!slot) return;
+      var name = S.field[parseInt(slot.dataset.slot, 10)]; if (!name) return;
+      cancelDetail(); removeFromField(name); hideDetail();
+    });
+    $('bench').addEventListener('click', function (e) {
+      var b = e.target.closest('.b-op'); if (!b) return;
+      if (window.__suppressClick) return;
+      scheduleDetail(b.dataset.name);
+    });
+    $('bench').addEventListener('dblclick', function (e) {
+      var b = e.target.closest('.b-op'); if (!b) return;
+      cancelDetail();
+      var i = S.bench.indexOf(b.dataset.name);
+      if (i >= 0) { pushUndo(); S.bench.splice(i, 1); renderAll(); }
+      hideDetail();
+    });
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('#detail') || e.target.closest('.slot') || e.target.closest('.op') || e.target.closest('.b-op') || e.target.closest('#trash')) return;
+      hideDetail();
+    });
+    $('slots').addEventListener('contextmenu', function (e) {
+      var slot = e.target.closest('.slot'); if (!slot) return;
+      e.preventDefault();
+      var name = S.field[parseInt(slot.dataset.slot, 10)]; if (!name) return;
+      S.locked[name] = !S.locked[name]; toast(S.locked[name] ? '锁定 ' + name : '取消锁定'); renderSlots();
+    });
+    $('slots').addEventListener('pointerdown', function (e) {
+      var slot = e.target.closest('.slot'); if (!slot) return;
+      var name = S.field[parseInt(slot.dataset.slot, 10)]; if (!name || e.button === 2) return;
+      startDrag(e, name, 'slot', S.field.indexOf(name));
+    });
+    $('bench').addEventListener('pointerdown', function (e) {
+      var b = e.target.closest('.b-op'); if (!b) return;
+      startDrag(e, b.dataset.name, 'bench', S.bench.indexOf(b.dataset.name));
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (S.selected && S.selected.name) { removeFromField(S.selected.name); S.selected = null; }
+      }
+      if (e.key === 'Escape') { $('solverOverlay').classList.remove('show'); $('helpOverlay').classList.remove('show'); $('wizardOverlay').classList.remove('show'); hideDetail(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); var s = undoStack.pop(); if (s) { var o = JSON.parse(s); S.field = o.field; S.bench = o.bench; S.elite = o.elite; S.pivots = o.pivots; S.maxSlots = o.maxSlots; renderAll(); } }
+    });
+  }
+
+  function openBanDialog() {
+    var names = core.covenants.map(function (c) { return c.name; });
+    var input = prompt('输入要禁用的盟约（顿号/逗号分隔，留空清除）：\n' + names.join('、'), S.bans.join('、'));
+    if (input == null) return;
+    S.bans = input.split(/[、,，\s]+/).filter(Boolean).filter(function (n) { return core.covByName[n]; });
+    renderAll();
+    toast(S.bans.length ? '已禁用 ' + S.bans.length + ' 条盟约' : '已清除禁用');
+  }
+
+  load();
+  try {
+    if (location.hash.indexOf('#demo') === 0) {
+      var demoCov = (location.hash.match(/cov=([^&]+)/) || [])[1] || '乌萨斯';
+      var demo = core.operators.filter(function (o) { return o.covs.indexOf(demoCov) >= 0; }).slice(0, 6);
+      S.field = demo.map(function (o) { return o.name; });
+      if (location.hash.indexOf('full=1') >= 0) {
+        var picked = [], seenCombo = {};
+        core.operators.forEach(function (o) {
+          if (picked.length >= 8) return;
+          var k = o.covs.join('|');
+          if (seenCombo[k]) return;
+          seenCombo[k] = 1; picked.push(o.name);
+        });
+        S.field = picked.slice(0, 8);
+      }
+      if (location.hash.indexOf('bench=1') >= 0) {
+        var bdemo = core.operators.filter(function (o) { return o.covs.indexOf('远见') >= 0; }).slice(0, 2);
+        S.bench = bdemo.map(function (o) { return o.name; });
+      }
+      if (location.hash.indexOf('solve=1') >= 0) {
+        setTimeout(function () { $('solverOverlay').classList.add('show'); runSolve(); }, 60);
+        solveTargets[demoCov] = 6;
+        document.querySelectorAll('.tag').forEach(function (t) {
+          if (t.dataset.cov === demoCov) { t.className = 'tag lv2'; t.textContent = demoCov + ' 6'; }
+        });
+      }
+      if (location.hash.indexOf('wizard=1') >= 0) {
+        setTimeout(function () {
+          openWizard();
+          if (location.hash.indexOf('step=2') >= 0) { WIZ.step = 2; renderWizard(); }
+          if (location.hash.indexOf('step=3') >= 0) { WIZ.targets['乌萨斯'] = 6; WIZ.targets['精准'] = 2; WIZ.step = 3; WIZ.results = []; renderWizard(); }
+        }, 120);
+      }
+      if (location.hash.indexOf('opt=1') >= 0) {
+        setTimeout(openOptions, 120);
+      }
+      if (location.hash.indexOf('help=1') >= 0) {
+        setTimeout(openHelp, 120);
+      }
+      if (location.hash.indexOf('mode=cov') >= 0) {
+        setTimeout(function () { var b = document.querySelector('.fmode[data-mode="cov"]'); if (b) b.click(); }, 80);
+      }
+      if (location.hash.indexOf('detail=1') >= 0) {
+        setTimeout(function () { var n = S.field[0]; if (n) { showDetail(n); } }, 80);
+      }
+      if (location.hash.indexOf('tree=1') >= 0) {
+        setTimeout(function () { var t = document.querySelector('.gtab[data-view="tree"]'); if (t) t.click(); }, 70);
+      }
+      if (location.hash.indexOf('matrix=1') >= 0) {
+        setTimeout(function () { document.querySelector('.gtab[data-view="matrix"]').click(); }, 60);
+      }
+    }
+    if (location.hash.indexOf('#t=') === 0) {
+      var q = decodeURIComponent(location.hash.slice(3)).split('&');
+      var names = q[0].split(',').filter(Boolean).filter(function (n) { return core.opByName[n]; });
+      document.body.setAttribute('data-hashdebug', names.length + '|' + names.join('|') + '|raw=' + q[0]);
+      if (names.length) { S.field = names.slice(0, 9); S.maxSlots = S.field.length > 8 ? 9 : 8; }
+      q.slice(1).forEach(function (part) {
+        var kv = part.split('=');
+        if (kv[0] === 'b') S.bench = kv[1].split(',').filter(function (n) { return core.opByName[n]; });
+        if (kv[0] === 'e') kv[1].split(',').filter(Boolean).forEach(function (n) { S.elite[n] = true; });
+        if (kv[0] === 'ban') S.bans = kv[1].split(',').filter(Boolean);
+      });
+    }
+  } catch (e) {}
+  buildOptions();
+  if (graph && graph.setParams) graph.setParams(S.settings);
+  buildSolveTags();
+  syncTags();
+  renderCovFilter();
+  $('covFilter').style.display = 'none';
+  bindEvents();
+  var archiveBtn = el('button', 'btn ghost', '人事部档案 8');
+  archiveBtn.onclick = function () {
+    S.archive = !S.archive; S.maxSlots = S.archive ? 9 : 8;
+    if (S.field.length > S.maxSlots) S.field = S.field.slice(0, S.maxSlots);
+    archiveBtn.textContent = '人事部档案 ' + S.maxSlots;
+    renderAll();
+  };
+  archiveBtn.textContent = '人事部档案 ' + (S.archive ? 9 : '8');
+  archiveBtn.className = 'stat';
+  archiveBtn.style.cursor = 'pointer';
+  document.querySelector('header .stats').appendChild(archiveBtn);
+  try { renderAll(); } catch (e) { window.__UI_ERROR__ = (e && e.stack) || String(e); }
+  window.__APP__ = {
+    S: S, core: core, renderAll: renderAll, graph: graph, solve: Solver.solve, compute: compute,
+    getTargets: function () { return solveTargets; },
+    getPreviewGraph: function () { return prevGraph; }
+  };
+})();
+</script>
+</body>
+</html>
