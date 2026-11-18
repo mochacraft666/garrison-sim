@@ -1,0 +1,16 @@
+# 构建产物
+dist/
+release/
+
+# 本地生成 / 临时文件
+data/avatars.json
+data/covenant-icons.json
+data/raw/
+.dsh/
+.edge-*
+*.log
+screenshots/
+h1.png
+h2.png
+h3.png
+node_modules/

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卫戍协议 · 配队模拟器</title>
+<style>/*__STYLES__*/</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><b>卫戍协议</b><span>配队模拟器 · <i id="season"></i></span></div>
+    <div class="stats">
+      <div class="stat on">场上 <b id="stField">0/8</b></div>
+      <div class="stat">整备区 <b id="stBench">0</b></div>
+      <div class="stat">点亮 <b id="stLit">0</b> 档</div>
+      <div class="stat">每回合 <b id="stRate">0</b> 层</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="btns">
+      <button class="btn ghost" id="btnUndo" title="撤销">↶</button>
+      <button class="btn ghost" id="btnClear">清空</button>
+      <button class="btn" id="btnBan">本局禁用</button>
+      <button class="btn" id="btnOptions" title="选项">选项</button>
+      <button class="btn" id="btnWizard" title="向导配队">向导</button>
+      <button class="btn" id="btnHelp" title="使用教程">教程</button>
+      <button class="btn" id="btnSave">存档</button>
+      <button class="btn primary" id="btnSolve">一键求解</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="pane left">
+      <div class="pane-title"><b>候选干员</b><span class="hint" id="poolCount"></span></div>
+      <div class="pool-tools">
+        <input class="search" id="search" placeholder="搜索干员名…">
+        <div class="filter-modes">
+          <button class="fmode on" data-mode="tier">等阶</button>
+          <button class="fmode" data-mode="cov">盟约</button>
+        </div>
+        <div class="tier-filter" id="tierFilter"></div>
+        <div class="chips" id="covFilter"></div>
+
+      </div>
+      <div class="pool-list" id="pool"></div>
+    </aside>
+
+    <section class="pane stage">
+      <div class="trash" id="trash"><span>✕</span>松手移除该干员</div>
+      <div class="slots-wrap">
+        <div class="slots" id="slots"></div>
+      </div>
+      <div class="bench-wrap">
+        <span class="lbl">整备区</span>
+        <div class="bench" id="bench"></div>
+        <span class="lbl" id="benchHint">备用干员 · 不占场上人数</span>
+      </div>
+      <div class="graph-wrap">
+        <div class="graph-tabs">
+          <button class="gtab on" data-view="graph">关系图谱</button>
+          <button class="gtab" data-view="matrix">矩阵</button>
+          <button class="gtab" data-view="tree">配队树</button>
+          <button class="btn ghost" id="btnShare" style="margin-left:auto">复制配队码</button>
+          <button class="btn ghost" id="btnPng">导出图谱</button>
+        </div>
+        <canvas id="graph"></canvas>
+        <div class="empty-hint" id="emptyHint">从左侧拖入干员开始配队，或点右上角「一键求解」直接生成</div>
+        <div class="matrix" id="matrix"></div>
+        <div class="tree" id="tree"></div>
+      </div>
+    </section>
+
+    <aside class="pane right">
+      <div class="pane-title"><b>盟约</b><span class="hint" id="covHint"></span></div>
+      <div class="cov-list" id="covList"></div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>数据：PRTS《卫戍协议·规程》CC BY-NC-SA · NGA 解包整理</span>
+    <span>游戏素材版权归上海鹰角网络科技有限公司</span>
+    <span class="foot-link" id="btnNotice" title="查看完整版权与下架声明">版权声明</span>
+    <span style="margin-left:auto">非官方工具 · 仅供学习交流 · 不收费</span>
+  </footer>
+</div>
+
+<div class="detail" id="detail"></div>
+
+<div class="overlay" id="optOverlay">
+  <div class="modal opt-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">选项</b>
+      <span style="font-size:11.5px;color:var(--dim2)">设置会保存在本地</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeOpt">✕</button>
+    </header>
+    <div class="modal-body opt-body" id="optBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="wizardOverlay">
+  <div class="modal wizard-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">向导配队</b>
+      <span style="font-size:11.5px;color:var(--dim2)" id="wizStep">第 1 步 / 共 3 步</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeWizard">✕</button>
+    </header>
+    <div class="modal-body wiz-body" id="wizBody"></div>
+    <footer class="wiz-foot">
+      <button class="btn" id="wizPrev">上一步</button>
+      <span class="wiz-tip" id="wizTip"></span>
+      <button class="btn primary" id="wizNext">下一步</button>
+    </footer>
+  </div>
+</div>
+
+<div class="overlay" id="helpOverlay">
+  <div class="modal help-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">使用教程</b>
+      <span style="font-size:11.5px;color:var(--dim2)">操作 · 规则 · 求解器 · 说明</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeHelp">✕</button>
+    </header>
+    <div class="modal-body help-body" id="helpBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="solverOverlay">
+  <div class="modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">一键求解</b>
+      <span style="font-size:11.5px;color:var(--dim2)">选择想点亮的盟约档位 → 计算满足条件的最少人数配队</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeSolver">✕</button>
+    </header>
+    <div class="body">
+      <div class="sec"><div class="h">核心盟约（点击 3 档 → 6 档 → 取消）</div><div class="tags" id="tagCore"></div></div>
+      <div class="sec"><div class="h">附加盟约</div><div class="tags" id="tagExtra"></div></div>
+      <div class="sec">
+        <div class="h">约束</div>
+        <div class="opt-row">
+          <label class="opt"><input type="checkbox" id="optArchive"> 人事部档案（场上 9 人）</label>
+          <label class="opt"><input type="checkbox" id="optPivot"> 使用变形同构体</label>
+          <input class="num" id="pivotCount" type="number" min="0" max="3" value="1" disabled>
+          <label class="opt"><input type="checkbox" id="optLocked"> 保留场上已有干员</label>
+          <label class="opt"><input type="checkbox" id="optHarmony" checked> 队伍中是否有魔王（调和 +1 人）</label>
+          <label class="opt">排序
+            <select id="optSort">
+              <option value="cov">激活盟约优先</option>
+              <option value="tier">棋子等阶优先</option>
+            </select>
+          </label>
+          <span id="solveInfo" style="color:var(--dim2);font-size:11.5px"></span>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="h">结果（按人数升序）</div>
+        <div class="results" id="results"><div class="empty-tip">选好盟约后点「开始计算」</div></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn primary" id="runSolve">开始计算</button>
+      <span style="font-size:11.5px;color:var(--dim2)" id="solveStat"></span>
+      <div class="spacer"></div>
+      <label class="opt" style="font-size:11.5px"><input type="checkbox" id="optStrict"> 严格模式（不多不少）</label>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>window.__DATA__ = /*__DATA__*/;</script>
+<script>/*__CORE__*/</script>
+<script>/*__SOLVER__*/</script>
+<script>/*__GRAPH__*/</script>
+<script>/*__UI__*/</script>
+</body>
+</html>
