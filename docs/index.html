@@ -228,10 +228,11 @@ body.dragging .trash.hot{background:#5a1a20;border-color:#e2605c;color:#fff;box-
 #solverOverlay select{background:#0f141a;color:#dfe7ef;border:1px solid #2a3440;border-radius:6px;padding:4px 6px;font:inherit;outline:none}
 .res{display:flex;gap:14px;align-items:flex-start}
 .res .resmain{flex:1;min-width:0}
-.res .covs{display:flex;flex-wrap:wrap;gap:6px;width:170px;flex:none;justify-content:flex-end;align-content:flex-start;margin:0}
+.res .covs{display:flex;flex-wrap:wrap;gap:6px;width:250px;flex:none;justify-content:flex-end;align-content:flex-start;margin:0}
 .res .covic{display:inline-flex;align-items:center;gap:4px;background:#0f141a;border:1px solid #2a3440;border-radius:6px;padding:3px 5px;font-size:12px;color:#c9d4de}
 .res .covic img{width:26px;height:26px;border-radius:4px;display:block}
 .res .covic b{color:#e6c27a;font-weight:600;font-size:12px}
+.res .covic .nm{font-size:11.5px;color:#b9c6d4;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .opt input[type=checkbox]{accent-color:#c9a45c}
 .num{width:52px;padding:3px 6px;border-radius:5px;border:1px solid var(--line);background:#0c1218;color:var(--text);text-align:center}
 .results{display:flex;flex-direction:column;gap:8px}
@@ -255,6 +256,39 @@ footer a{color:#6f8ba3;text-decoration:none}
 .foot-link:hover{color:#9fc0d8}
 .help-note{margin:8px 0 2px;padding:6px 8px;border-left:3px solid #3a4651;background:#0f141a;color:#8a97a5;font-size:12px}
 @media (max-width:1200px){main{grid-template-columns:250px 1fr 280px}.slots{grid-template-columns:repeat(4,1fr)}}
+
+/* ---------- 求解模式 / 求解设置 ---------- */
+.mode-row{display:flex;gap:8px;flex-wrap:wrap}
+.mode-btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#101820;color:var(--dim);cursor:pointer;text-align:left;transition:.12s;min-width:190px}
+.mode-btn b{font-size:12.5px;color:var(--text);font-weight:600;letter-spacing:.04em}
+.mode-btn small{font-size:11px;color:var(--dim2)}
+.mode-btn:hover{border-color:#3d5166;background:#152029}
+.mode-btn.on{border-color:var(--gold2);background:#1d1a12;box-shadow:0 0 0 1px #e6c27a33 inset}
+.mode-btn.on b{color:var(--gold)}
+.solve-note{font-size:11.5px;color:var(--dim2);margin-top:8px;line-height:1.6}
+.solve-note b{color:var(--gold)}
+.res .score{font-size:11px;color:var(--gold);border:1px solid #3a3323;background:#1b170f;border-radius:5px;padding:1px 6px}
+.res .stat.neg{color:#d98a86}
+.cfg-modal{width:min(760px,94vw);max-height:86vh;display:flex;flex-direction:column}
+.cfg-sec{margin-bottom:18px}
+.cfg-sec h4{margin:0 0 8px;font-size:12.5px;color:var(--gold);letter-spacing:.06em}
+.cfg-hint{font-size:11px;color:var(--dim2);line-height:1.6;margin:2px 0 6px}
+.cfg-num{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
+.cfg-num input[type=range]{width:150px;accent-color:var(--gold)}
+.cfg-num b{color:var(--gold);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.cfg-sub{font-size:11px;color:var(--dim2)}
+
+.cfg-modal .opt-slider{grid-template-columns:124px 1fr 46px}
+
+.opt-select{background:#0f141a;color:#dfe7ef;border:1px solid #2a3440;border-radius:6px;padding:4px 8px;font:inherit;font-size:12px;outline:none}
+
+/* 求解设置：以 0 为中点的权重条 */
+.cfg-modal .opt-slider input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;background:transparent;outline:none;cursor:pointer}
+.cfg-modal .opt-slider input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--track,#232c36)}
+.cfg-modal .opt-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-4px;border-radius:50%;background:#e6c27a;border:2px solid #121a22;box-shadow:0 0 0 1px #e6c27a66;cursor:grab}
+.cfg-modal .opt-slider input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--track,#232c36)}
+.cfg-modal .opt-slider input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#e6c27a;border:2px solid #121a22;box-shadow:0 0 0 1px #e6c27a66;cursor:grab}
+@media (max-width:900px){.res .covs{width:190px}.res .covic .nm{max-width:52px}}
 </style>
 </head>
 <body>
@@ -382,47 +416,54 @@ footer a{color:#6f8ba3;text-decoration:none}
   <div class="modal">
     <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
       <b style="color:var(--gold);letter-spacing:.1em">一键求解</b>
-      <span style="font-size:11.5px;color:var(--dim2)">选择想点亮的盟约档位 → 计算满足条件的最少人数配队</span>
+      <span style="font-size:11.5px;color:var(--dim2)">选标签 → 选模式 → 计算；细节都在「求解设置」里</span>
       <div class="spacer"></div>
       <button class="btn ghost" id="closeSolver">✕</button>
     </header>
     <div class="body">
+      <div class="sec">
+        <div class="h">计算模式</div>
+        <div class="mode-row">
+          <button class="mode-btn on" data-mode="min"><b>最少人数</b><small>满足标签所需的最少上场人数</small></button>
+          <button class="mode-btn" data-mode="strict"><b>严格拉满</b><small>拉满场上上限（8 / 9 人），再比拼盟约与棋子质量</small></button>
+        </div>
+      </div>
       <div class="sec"><div class="h">核心盟约（点击 3 档 → 6 档 → 取消）</div><div class="tags" id="tagCore"></div></div>
       <div class="sec"><div class="h">附加盟约</div><div class="tags" id="tagExtra"></div></div>
       <div class="sec">
-        <div class="h">约束</div>
-        <div class="opt-row">
-          <label class="opt"><input type="checkbox" id="optArchive"> 人事部档案（场上 9 人）</label>
-          <label class="opt"><input type="checkbox" id="optPivot"> 使用变形同构体</label>
-          <input class="num" id="pivotCount" type="number" min="0" max="3" value="1" disabled>
-          <label class="opt"><input type="checkbox" id="optLocked"> 保留场上已有干员</label>
-          <label class="opt"><input type="checkbox" id="optHarmony" checked> 队伍中是否有魔王（调和 +1 人）</label>
-          <label class="opt">排序
-            <select id="optSort">
-              <option value="cov">激活盟约优先</option>
-              <option value="tier">棋子等阶优先</option>
-            </select>
-          </label>
-          <span id="solveInfo" style="color:var(--dim2);font-size:11.5px"></span>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="h">结果（按人数升序）</div>
+        <div class="h">结果</div>
         <div class="results" id="results"><div class="empty-tip">选好盟约后点「开始计算」</div></div>
+        <div class="solve-note" id="solveInfo"></div>
       </div>
     </div>
     <div class="foot">
       <button class="btn primary" id="runSolve">开始计算</button>
+      <button class="btn" id="openSolverCfg">⚙ 求解设置</button>
       <span style="font-size:11.5px;color:var(--dim2)" id="solveStat"></span>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="solverCfgOverlay">
+  <div class="modal opt-modal cfg-modal">
+    <header style="display:flex;align-items:center;gap:12px;padding:12px 18px">
+      <b style="color:var(--gold);letter-spacing:.1em">一键求解 · 设置</b>
+      <span style="font-size:11.5px;color:var(--dim2)">所有求解选项都在这里，设置会保存在本地</span>
       <div class="spacer"></div>
-      <label class="opt" style="font-size:11.5px"><input type="checkbox" id="optStrict"> 严格模式（不多不少）</label>
+      <button class="btn ghost" id="closeSolverCfg">✕</button>
+    </header>
+    <div class="modal-body opt-body" id="cfgBody"></div>
+    <div class="foot">
+      <button class="btn" id="resetSolverCfg">恢复默认权重</button>
+      <div class="spacer"></div>
+      <button class="btn primary" id="doneSolverCfg">完成</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script>window.__DATA__ = {"meta":{"season":"规程·序列Ⅰ","version":"1.2.3","fetchedAt":"2026-11-18","counts":{"ops":143,"covs":26},"avatarCount":0,"iconCount":0},"covenants":[{"id":"c01","name":"炎","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3炎","body":"干员攻击力+23%+0.9*层数"},{"at":6,"label":"6炎","body":"战斗开始时，[炎]干员每次攻击时造成攻击力6%的随机元素损伤；全场敌人元素损伤恢复速度增加40%+0.3*层数"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c02","name":"萨尔贡","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3萨尔贡","body":"干员开启技能时，所有[萨尔贡]干员攻击速度+12(至多+300)，持续5+0.22*层数秒"},{"at":6,"label":"6萨尔贡","body":"[萨尔贡]干员每次开启技能时，在攻击范围内制造一个流沙地面。位于流沙地面上的敌人受到20%+0.025*层数(上限60%)的迟钝效果，每5秒造成一次5000+25*层数点法术伤害并束缚1秒；[萨尔贡]干员技能持续期间，攻击范围内的流沙地面使敌人的迟钝效果变为2倍，每秒受到800+4*层数点法术伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c03","name":"维多利亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3维多利亚","body":"携带装备的[维多利亚]干员伤害提升至125%+0.8*层数"},{"at":6,"label":"6维多利亚","body":"[维多利亚]干员每携带1件装备攻击力+40%，携带进阶装备改为+80%"}],"layerGates":[{"label":"每叠加25层","body":"获得一件带有随机特殊效果的维式重锤"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c04","name":"谢拉格","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3谢拉格","body":"干员伤害提升至125%，对寒冷和冻结敌人额外提升至135%+1*层数"},{"at":6,"label":"6谢拉格","body":"战斗开始时召唤可自主行动的雪山巨人，其攻击力和生命值随谢拉格层数提升而提升。雪山巨人将在巨人和雪山形态转换，雪山形态可以阻挡敌人并造成溅射伤害，雪山形态攻击被冻结的敌人时造成高额法术伤害并解除目标的冻结状态；巨人形态可以移动并对敌人造成远程溅射伤害"}],"layerGates":[{"label":"每叠加100层","body":"获得一件谢拉格不融冰"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c05","name":"阿戈尔","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3阿戈尔","body":"干员生命值+35%+1*层数；战斗开始时[阿戈尔]干员依次吞噬身前一格干员造成5000点物理伤害并获得其基础攻击力和阻挡数，并叠加等于被吞噬者等阶的盟约层数([阿戈尔]之间优先对更靠左和靠上的干员发起吞噬)"},{"at":6,"label":"6阿戈尔","body":"前3名[阿戈尔]干员首次被击倒时立刻复活"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c06","name":"叙拉古","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3叙拉古","body":"干员部署后攻击速度+25+0.8*层数，持续32+0.4*层数秒"},{"at":6,"label":"6叙拉古","body":"每次攻击时有30%概率为敌人随机附加一个异常状态，持续1+0.0018*层数秒；敌人存在2种或以上异常状态时，每秒对自身及周围一定范围内的敌人造成800+10*层数点真实伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c07","name":"卡西米尔","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3卡西米尔","body":"每次有干员部署时[卡西米尔]干员攻击力+20%(至多+50%+1*层数)，持续至战斗结束"},{"at":6,"label":"6卡西米尔","body":"[卡西米尔]地面干员被击倒时离场并召唤整备区最右侧[卡西米尔]干员加入战斗(不改变当前盟约的激活状态)；[卡西米尔]干员开启技能或部署后30秒内攻击时附带攻击力65%的真实伤害"}],"layerGates":[],"notes":[],"countRule":"bench-right","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c08","name":"乌萨斯","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3乌萨斯","body":"干员攻击力+35%+0.75*层数，生命值+10%+0.3*层数，[乌萨斯]干员击倒其他单位时为[乌萨斯]叠加2层临时层数"},{"at":6,"label":"6乌萨斯","body":"[乌萨斯]干员受到伤害的15%+0.05*层数(上限100%)转化为10秒的生命流失，当伤害来源被击倒时不再流失生命；阻挡敌人期间，敌人每秒受到相当于攻击力50%+0.25*层数的法术伤害；[乌萨斯]干员击倒其他单位时叠加的临时层数提升至4层"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c09","name":"伊比利亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3伊比利亚","body":"干员或炼金单元每次造成伤害时，使目标每秒受到11%+0.06*层数攻击力(至多叠加10次)的持续法术伤害，持续10秒"},{"at":6,"label":"6伊比利亚","body":"[伊比利亚]干员或炼金单元造成伤害时附带的持续法术伤害提升至2倍，并使目标移动速度-4%(至多-80%)，持续10秒；[伊比利亚]干员或炼金单元每次造成伤害时有20%概率弹射到周围一定范围内的敌人造成300%攻击力的法术伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c10","name":"莱塔尼亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3莱塔尼亚","body":"干员和召唤物攻击力+30%+1*层数，场上敌人被击倒时在附近召唤“一个小节”(场上最多存在10个)"},{"at":6,"label":"6莱塔尼亚","body":"召唤“一个小节”时30%+0.1*层数(上限100%)概率改为召唤“一个乐部”，在场时使[莱塔尼亚]干员攻速+20；场上[莱塔尼亚]召唤物上限提升至20；场上我方干员被击倒时会额外召唤“一个小节”"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c11","name":"精准","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2精准","body":"干员攻击力+10%+1.2*层数"},{"at":3,"label":"3精准","body":"生效范围变为[精准]干员和所有远程干员，且攻击无视30%防御力和法术抗性"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c12","name":"迅捷","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2迅捷","body":"干员技能结束时有20%+0.35*层数(上限100%)概率立刻回复12点技力"}],"layerGates":[{"label":"40层","body":"所有干员技能结束时有等概率额外回复15点技力"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c13","name":"灵巧","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2灵巧","body":"干员及周围4格的干员攻击速度+10+1*层数"}],"layerGates":[{"label":"40层","body":"生效范围变为[灵巧]干员周围8格"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c14","name":"坚守","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2坚守","body":"所有干员生命值+25%+1.2*层数"},{"at":3,"label":"3坚守","body":"场上非[坚守]干员受到伤害时，所受伤害的40%由[坚守]干员平均承担；[坚守]干员受到伤害时，伤害来源受到850+10*层数点法术伤害(每0.2秒至多触发1次)和持续5秒的40%的脆弱效果"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c15","name":"助力","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2助力","body":"所有干员防御力+15%+1.2*层数，再部署时间-30%；休整期结束时，使当前所有已激活的盟约层数+2"},{"at":3,"label":"3助力","body":"改为层数+4"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c16","name":"远见","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2远见","body":"每叠加10层，获得一次2资金"}],"layerGates":[{"label":"首次到达80层","body":"所有[远见]干员购买价格永久-1资金"},{"label":"首次到达150层","body":"所有[远见]干员购买价格额外永久-1资金"}],"notes":["整备区的[远见]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c17","name":"奇迹","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2奇迹","body":"刷新调度中心时，有18%+0.25*层数(上限100%)概率使下次刷新不消耗资金"}],"layerGates":[{"label":"首次到达100层","body":"调度中心刷新时至少出现一名等同于当前调度中心等级的干员"}],"notes":["整备区的[奇迹]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c18","name":"投资人","kind":"附加","thresholds":[3],"tiers":[{"at":3,"label":"3投资人","body":"干员的“获得时”类特质每次触发2次"}],"layerGates":[{"label":"100层","body":"“获得时”类特质每次触发3次"}],"notes":["整备区的[投资人]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c19","name":"突袭","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2突袭","body":"干员10秒内未进行攻击或技能就绪时，若范围内没有敌人，则保留技力立即再部署至一名地面敌人周围，期间攻击力和生命值+25%+1*层数"}],"layerGates":[{"label":"50层","body":"所有干员攻击速度+50"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c20","name":"不屈","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2不屈","body":"地面干员被击倒时，有18%+0.4*层数(上限100%)概率立刻重新部署"},{"at":3,"label":"3不屈","body":"地面干员被击倒时使场上所有干员技力+5"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c21","name":"调和","kind":"附加","thresholds":[1],"tiers":[{"at":1,"label":"1调和","body":"激活时可以使场上核心盟约的激活人数+1，[调和]干员享受已激活的核心盟约的效果"}],"layerGates":[],"notes":[],"countRule":"harmony","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c22","name":"协防干员","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2协防干员","body":"所有干员受到的物理和法术伤害-20%；[协防干员]伤害提升至120%，精锐[协防干员]造成伤害提升至140%"}],"layerGates":[],"notes":[],"countRule":"fallback","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c23","name":"独行","kind":"附加","thresholds":[1],"tiers":[{"at":1,"label":"1独行","body":"干员攻击力和生命值+60%，初始技力+15(在场2名及以上[独行]干员时失效)"}],"layerGates":[],"notes":[],"countRule":"solo","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c24","name":"绝技","kind":"附加","thresholds":[2,5],"tiers":[{"at":2,"label":"2精锐","body":"精锐状态的干员攻击力+30%"},{"at":5,"label":"5精锐","body":"精锐状态的干员技力消耗-30%"}],"layerGates":[],"notes":[],"countRule":"elite","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c25","name":"聚合","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2聚合","body":"干员攻击范围内的我方单位每秒回复攻击力16%+0.12*层数的生命值和攻击力8%+0.06*层数的元素损伤"},{"at":3,"label":"3聚合","body":"[聚合]干员攻击范围内的所有干员获得15%+0.08*层数的庇护"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c26","name":"奥术","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2奥术","body":"干员造成伤害时额外附加一次20%+0.4*层数攻击力的法术伤害"},{"at":3,"label":"3奥术","body":"场上所有敌人每次受到伤害时法术抗性-1(累计降幅上限为30+0.05*层数点，最多降低100点)；[奥术]干员攻击范围内的敌人隐匿效果失效"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"}],"operators":[{"name":"折桠","tier":"Ⅰ","tierNum":1,"covs":["乌萨斯","不屈"],"traitType":"持续叠加","trait1":"<进入休整期时>转化2层【乌萨斯】临时层数为固定层数","trait2":"<进入休整期时>转化4层【乌萨斯】临时层数为固定层数"},{"name":"艾丝黛尔","tier":"Ⅰ","tierNum":1,"covs":["萨尔贡","独行"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】层数+1（每回合至多叠加2层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】层数+2（每回合至多叠加4层）"},{"name":"幽灵鲨","tier":"Ⅰ","tierNum":1,"covs":["阿戈尔"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【阿戈尔】层数+1（每回合至多叠加1层）","trait2":"<战斗中>部署时使已激活的【阿戈尔】层数+2（每回合至多叠加2层）"},{"name":"野鬃","tier":"Ⅰ","tierNum":1,"covs":["卡西米尔","助力"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【卡西米尔】层数+1（每回合至多叠加2层）","trait2":"<战斗中>部署时使已激活的【卡西米尔】层数+2（每回合至多叠加4层）"},{"name":"慕斯","tier":"Ⅰ","tierNum":1,"covs":["维多利亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【维多利亚】层数+1","trait2":"<休整期结束时>使已激活的【维多利亚】层数+2"},{"name":"角峰","tier":"Ⅰ","tierNum":1,"covs":["谢拉格","坚守"],"traitType":"作战能力","trait1":"<战斗中>对每名敌人首次造成伤害时使目标陷入2秒寒冷","trait2":"<战斗中>对每名敌人首次造成伤害时使目标陷入4秒寒冷"},{"name":"灰喉","tier":"Ⅰ","tierNum":1,"covs":["精准"],"traitType":"单次叠加","trait1":"<获得时>【精准】层数+2","trait2":"<获得时>【精准】层数+4"},{"name":"深靛","tier":"Ⅰ","tierNum":1,"covs":["伊比利亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】层数+2","trait2":"<休整期结束时>使已激活的【伊比利亚】层数+4"},{"name":"卡达","tier":"Ⅰ","tierNum":1,"covs":["奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【奥术】层数+1","trait2":"<休整期结束时>使已激活的【奥术】层数+2"},{"name":"摆渡人","tier":"Ⅰ","tierNum":1,"covs":["坚守","不屈"],"traitType":"单次叠加","trait1":"<获得时>【坚守】【不屈】层数+1","trait2":"<获得时>【坚守】【不屈】层数+2"},{"name":"夏栎","tier":"Ⅰ","tierNum":1,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使当前已激活且层数最多的盟约层数+1（此干员在整备区也生效）","trait2":"<休整期结束时>使当前已激活且层数最多的盟约层数+2（此干员在整备区也生效）"},{"name":"杰克","tier":"Ⅰ","tierNum":1,"covs":["突袭"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"霜叶","tier":"Ⅰ","tierNum":1,"covs":["灵巧"],"traitType":"单次叠加","trait1":"<获得时>【灵巧】层数+2","trait2":"<获得时>【灵巧】层数+4"},{"name":"拜松","tier":"Ⅰ","tierNum":1,"covs":["炎"],"traitType":"单次叠加","trait1":"<获得时>【炎】层数+2","trait2":"<获得时>【炎】层数+4"},{"name":"褐果","tier":"Ⅰ","tierNum":1,"covs":["聚合"],"traitType":"单次叠加","trait1":"<获得时>【聚合】层数+2","trait2":"<获得时>【聚合】层数+4"},{"name":"烈夏","tier":"Ⅰ","tierNum":1,"covs":["乌萨斯"],"traitType":"持续叠加","trait1":"<战斗开始时>使已激活的【乌萨斯】临时层数+4","trait2":"<战斗开始时>使已激活的【乌萨斯】临时层数+8"},{"name":"陨星","tier":"Ⅰ","tierNum":1,"covs":["迅捷"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【迅捷】层数+1（每回合至多叠加2层）","trait2":"<战斗中>每次开启技能时使已激活的【迅捷】层数+2（每回合至多叠加4层）"},{"name":"拉普兰德","tier":"Ⅰ","tierNum":1,"covs":["叙拉古"],"traitType":"单次叠加","trait1":"<获得时>【叙拉古】层数+2","trait2":"<获得时>【叙拉古】层数+4"},{"name":"地灵","tier":"Ⅰ","tierNum":1,"covs":["莱塔尼亚","独行"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】层数+1（每回合至多叠加1层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】层数+2（每回合至多叠加2层）"},{"name":"折光","tier":"Ⅱ","tierNum":2,"covs":["莱塔尼亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【莱塔尼亚】层数+4","trait2":"<休整期结束时>使已激活的【莱塔尼亚】层数+8"},{"name":"蓝毒","tier":"Ⅱ","tierNum":2,"covs":["伊比利亚"],"traitType":"作战能力","trait1":"<战斗中>【伊比利亚】每叠加2层，本干员攻击力+1%","trait2":"<战斗中>【伊比利亚】每叠加1层，本干员攻击力+1%"},{"name":"泡泡","tier":"Ⅱ","tierNum":2,"covs":["萨尔贡","坚守"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】【坚守】层数+2（每回合至多叠加4层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】【坚守】层数+4（每回合至多叠加8层）"},{"name":"莎草","tier":"Ⅱ","tierNum":2,"covs":["萨尔贡","聚合"],"traitType":"作战能力","trait1":"<战斗中>每次开启技能时使身前一格干员回复2点技力","trait2":"<战斗中>每次开启技能时使身前一格干员回复4点技力"},{"name":"雪猎","tier":"Ⅱ","tierNum":2,"covs":["谢拉格","精准"],"traitType":"单次叠加","trait1":"<获得时>【谢拉格】【精准】层数+4","trait2":"<获得时>【谢拉格】【精准】层数+8"},{"name":"砾","tier":"Ⅱ","tierNum":2,"covs":["卡西米尔","不屈"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【卡西米尔】【不屈】层数+2（每场战斗至多叠加12层）","trait2":"<战斗中>部署时使已激活的【卡西米尔】【不屈】层数+4（每场战斗至多叠加24层）"},{"name":"复奏","tier":"Ⅱ","tierNum":2,"covs":["莱塔尼亚","叙拉古","奇迹"],"traitType":"持续叠加","trait1":"<刷新时>若为本回合首次主动刷新，使已激活的【莱塔尼亚】【叙拉古】层数+2（此干员在整备区也生效）","trait2":"<刷新时>若为本回合首次主动刷新，使已激活的【叙拉古】【莱塔尼亚】层数+4（此干员在整备区也生效）"},{"name":"奥斯塔","tier":"Ⅱ","tierNum":2,"covs":["叙拉古"],"traitType":"整备能力","trait1":"<获得时>获得一次免费刷新","trait2":"<获得时>获得两次免费刷新"},{"name":"Miss.Christine","tier":"Ⅱ","tierNum":2,"covs":["维多利亚","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【维多利亚】【奥术】层数+3","trait2":"<休整期结束时>使已激活的【维多利亚】【奥术】层数+6"},{"name":"哈洛德","tier":"Ⅱ","tierNum":2,"covs":["维多利亚","谢拉格"],"traitType":"作战能力","trait1":"<战斗中>【维多利亚】【谢拉格】每叠加5层，本干员攻击力+1%","trait2":"<战斗中>【维多利亚】【谢拉格】每叠加5层，本干员攻击力+2%"},{"name":"云迹","tier":"Ⅱ","tierNum":2,"covs":["灵巧","奇迹"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使自身已激活的盟约层数+3（每回合至多叠加6层）","trait2":"<战斗中>每次开启技能时使自身已激活的盟约层数+6（每回合至多叠加12层）"},{"name":"蛇屠箱","tier":"Ⅱ","tierNum":2,"covs":["坚守"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【坚守】层数+4","trait2":"<休整期结束时>使已激活的【坚守】层数+8"},{"name":"波登可","tier":"Ⅱ","tierNum":2,"covs":["聚合","迅捷"],"traitType":"整备能力","trait1":"<售出时>下回合额外获得1资金","trait2":"<售出时>下回合额外获得2资金"},{"name":"承曦格雷伊","tier":"Ⅱ","tierNum":2,"covs":["精准","灵巧"],"traitType":"整备能力","trait1":"<获得时>获得一件精准狙击镜","trait2":"<获得时>获得两件精准狙击镜"},{"name":"锡人","tier":"Ⅱ","tierNum":2,"covs":["投资人"],"traitType":"单次叠加","trait1":"<获得时>【投资人】层数+4","trait2":"<获得时>【投资人】层数+8"},{"name":"宴","tier":"Ⅱ","tierNum":2,"covs":["不屈"],"traitType":"单次叠加","trait1":"<获得时>【不屈】层数+4","trait2":"<获得时>【不屈】层数+8"},{"name":"渡桥","tier":"Ⅱ","tierNum":2,"covs":["远见"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身及身前一格干员已激活的盟约层数+2","trait2":"<休整期结束时>使自身及身前一格干员已激活的盟约层数+4"},{"name":"矩","tier":"Ⅱ","tierNum":2,"covs":["炎"],"traitType":"单次叠加","trait1":"<获得时>获得等同于当前调度中心等级的【炎】层数","trait2":"<获得时>获得等同于当前调度中心等级两倍的【炎】层数"},{"name":"星极","tier":"Ⅱ","tierNum":2,"covs":["奇迹"],"traitType":"作战能力","trait1":"只需两名本干员即可合成精锐","trait2":""},{"name":"瑰盐","tier":"Ⅱ","tierNum":2,"covs":["伊比利亚","聚合"],"traitType":"作战能力","trait1":"<战斗中>【伊比利亚】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【伊比利亚】每叠加3层，本干员攻击力+2%"},{"name":"真理","tier":"Ⅱ","tierNum":2,"covs":["乌萨斯"],"traitType":"整备能力","trait1":"购买价格为1","trait2":""},{"name":"铸铁","tier":"Ⅱ","tierNum":2,"covs":["突袭"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【突袭】层数+3","trait2":"<休整期结束时>使已激活的【突袭】层数+6"},{"name":"星源","tier":"Ⅱ","tierNum":2,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使当前已激活且层数最多的盟约层数+2（此干员在整备区也生效）","trait2":"<休整期结束时>使当前已激活且层数最多的盟约层数+4（此干员在整备区也生效）"},{"name":"安哲拉","tier":"Ⅱ","tierNum":2,"covs":["阿戈尔","助力"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人或我方干员使已激活的【阿戈尔】【助力】层数+3（每回合至多叠加9层）","trait2":"<战斗中>每击倒一名敌人或我方干员使已激活的【阿戈尔】【助力】层数+6（每回合至多叠加18层）"},{"name":"车尔尼","tier":"Ⅲ","tierNum":3,"covs":["莱塔尼亚","坚守"],"traitType":"整备能力","trait1":"<获得时>获得一件“莱塔尼亚小鼓”","trait2":"<获得时>获得两件“莱塔尼亚小鼓”"},{"name":"卡涅利安","tier":"Ⅲ","tierNum":3,"covs":["莱塔尼亚","萨尔贡","迅捷"],"traitType":"整备能力","trait1":"<获得时>获得一件“迅捷作战粮”","trait2":"<获得时>获得两件“迅捷作战粮”"},{"name":"乌啾","tier":"Ⅲ","tierNum":3,"covs":["乌萨斯","聚合"],"traitType":"持续叠加","trait1":"<进入休整期时>场上每有一名【乌萨斯】干员，转化1层【乌萨斯】临时层数为固定层数","trait2":"<进入休整期时>场上每有一名【乌萨斯】干员，转化2层【乌萨斯】临时层数为固定层数"},{"name":"海沫","tier":"Ⅲ","tierNum":3,"covs":["伊比利亚","不屈"],"traitType":"整备能力","trait1":"<休整期结束时>自身售出价格+1（自身售出价格至多为4）","trait2":"<休整期结束时>自身售出价格+2（自身售出价格至多为8）"},{"name":"旅骨","tier":"Ⅲ","tierNum":3,"covs":["伊比利亚","精准"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身及身前一格干员已激活的盟约叠加等同于其售出价格的层数","trait2":"<休整期结束时>使自身及身前一格干员已激活的盟约叠加等同于其售出价格2倍的层数"},{"name":"风絮","tier":"Ⅲ","tierNum":3,"covs":["炎","聚合"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【聚合】层数+2（每回合至多叠加16层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【聚合】层数+4（每回合至多叠加32层）"},{"name":"极光","tier":"Ⅲ","tierNum":3,"covs":["谢拉格"],"traitType":"单次叠加","trait1":"<获得时> 【谢拉格】层数+1（每次触发后升级，至多叠加12层）","trait2":""},{"name":"耶拉","tier":"Ⅲ","tierNum":3,"covs":["谢拉格","奇迹"],"traitType":"整备能力","trait1":"<获得时>获得一件“谢拉格不融冰”","trait2":"<获得时>获得两件“谢拉格不融冰”"},{"name":"初雪","tier":"Ⅲ","tierNum":3,"covs":["谢拉格","协防干员"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人进入冻结使已激活的【谢拉格】层数+1（每回合至多叠加16层）","trait2":"<战斗中>攻击范围内每有一名敌人进入冻结使已激活的【谢拉格】层数+2（每回合至多叠加32层）"},{"name":"深巡","tier":"Ⅲ","tierNum":3,"covs":["阿戈尔","坚守"],"traitType":"作战能力","trait1":"<战斗中>部署时【阿戈尔】盟约每叠加20层，使自身及周围四格的干员攻击速度+1，持续30秒","trait2":"<战斗中>部署时【阿戈尔】盟约每叠加10层，使自身及周围四格的干员攻击速度+1，持续30秒"},{"name":"斯卡蒂","tier":"Ⅲ","tierNum":3,"covs":["阿戈尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【阿戈尔】层数+4（每场战斗至多叠加8层）","trait2":"<战斗中>部署时使已激活的【阿戈尔】层数+8（每场战斗至多叠加16层）"},{"name":"瑕光","tier":"Ⅲ","tierNum":3,"covs":["卡西米尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使自身已激活的盟约层数+3（每场战斗至多叠加9层）","trait2":"<战斗中>部署时使自身已激活的盟约层数+6（每场战斗至多叠加18层）"},{"name":"忍冬","tier":"Ⅲ","tierNum":3,"covs":["叙拉古","迅捷"],"traitType":"整备能力","trait1":"<获得时> 获得1次免费刷新（触发2次后升级，至多获得3次免费刷新）","trait2":""},{"name":"伺夜","tier":"Ⅲ","tierNum":3,"covs":["叙拉古","精准"],"traitType":"持续叠加","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）；；每击倒一名敌人使已激活的【叙拉古】【精准】层数+2（每回合至多叠加8层）","trait2":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）；；每击倒一名敌人使已激活的【叙拉古】【精准】层数+4（每回合至多叠加16层）"},{"name":"水灯心","tier":"Ⅲ","tierNum":3,"covs":["维多利亚","独行","灵巧"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"空弦","tier":"Ⅲ","tierNum":3,"covs":["精准","远见"],"traitType":"持续叠加","trait1":"<进入休整期时>使自身及身前一格干员已激活的盟约层数+3","trait2":"<进入休整期时>使自身及身前一格干员已激活的盟约层数+6"},{"name":"吉星","tier":"Ⅲ","tierNum":3,"covs":["奇迹"],"traitType":"整备能力","trait1":"<售出时>进行一次I阶干员的免费特殊招募；本干员合成为精锐状态后，上述特殊招募变为V阶干员","trait2":"<售出时>进行一次V阶干员的免费特殊招募"},{"name":"伊桑","tier":"Ⅲ","tierNum":3,"covs":["奥术","突袭"],"traitType":"整备能力","trait1":"<售出时>随机获得一名当前人数最多盟约的干员（不高于当前调度中心等级；无法获得自身）","trait2":""},{"name":"罗比菈塔","tier":"Ⅲ","tierNum":3,"covs":["坚守","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>同一行每有1名干员，使已激活的【坚守】【助力】层数+2","trait2":"<休整期结束时>同一行每有1名干员，使已激活的【坚守】【助力】层数+4"},{"name":"乌有","tier":"Ⅲ","tierNum":3,"covs":["炎"],"traitType":"整备能力","trait1":"<获得时>获得一枚“盟约之币”","trait2":"<获得时>获得两枚“盟约之币”"},{"name":"历阵锐枪芬","tier":"Ⅲ","tierNum":3,"covs":["卡西米尔","远见"],"traitType":"作战能力","trait1":"<战斗中>被击倒时召唤整备区的一名【卡西米尔】干员（优先选择最右侧）上场，并使整备区干员的当前再部署时间-30%","trait2":"<战斗中>被击倒时召唤整备区的一名【卡西米尔】干员（优先选择最右侧）上场，并使整备区干员的当前再部署时间-60%"},{"name":"凯瑟琳","tier":"Ⅲ","tierNum":3,"covs":["维多利亚","远见"],"traitType":"整备能力","trait1":"<获得时>获得一件维式重锤，小概率获得特殊维式重锤","trait2":"<获得时>获得一件特殊维式重锤，小概率获得终极维式重锤"},{"name":"盟约·辅助干员","tier":"Ⅲ","tierNum":3,"covs":["调和"],"traitType":"作战能力","trait1":"<战斗中>攻击力和生命上限+20%","trait2":"<战斗中>攻击力和生命上限+40%"},{"name":"风丸","tier":"Ⅲ","tierNum":3,"covs":["不屈"],"traitType":"持续叠加","trait1":"<战斗中>自身被击倒或与傀儡发生替换时使已激活的【不屈】层数+2（每回合至多叠加10层）","trait2":"<战斗中>自身被击倒或与傀儡发生替换时使已激活的【不屈】层数+4（每回合至多叠加20层）"},{"name":"至简","tier":"Ⅲ","tierNum":3,"covs":["萨尔贡"],"traitType":"整备能力","trait1":"购买价格为1","trait2":""},{"name":"奥尔佳","tier":"Ⅲ","tierNum":3,"covs":["乌萨斯","灵巧"],"traitType":"整备能力","trait1":"<获得时>获得一件乌萨斯呼吸器","trait2":"<获得时>获得两件乌萨斯呼吸器"},{"name":"青枳","tier":"Ⅲ","tierNum":3,"covs":["坚守","迅捷"],"traitType":"持续叠加","trait1":"<进入休整期时>使自身及身后一格干员已激活的盟约层数+3","trait2":"<进入休整期时>使自身及身后一格干员已激活的盟约层数+6"},{"name":"黑键","tier":"Ⅳ","tierNum":4,"covs":["莱塔尼亚","精准"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【精准】层数+1（每回合至多叠加8层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【精准】层数+2（每回合至多叠加16层）"},{"name":"艾雅法拉","tier":"Ⅳ","tierNum":4,"covs":["莱塔尼亚","奥术"],"traitType":"作战能力","trait1":"<战斗中>【莱塔尼亚】【奥术】每叠加2层，本干员技力自然回复速度+0.02/秒，攻击力+1%","trait2":"<战斗中>【莱塔尼亚】【奥术】每叠加1层，本干员技力自然回复速度+0.02/秒，攻击力+1%"},{"name":"赫拉格","tier":"Ⅳ","tierNum":4,"covs":["乌萨斯","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【乌萨斯】【突袭】层数+4（每场战斗至多叠加12层）","trait2":"<战斗中>部署时使已激活的【乌萨斯】【突袭】层数+8（每场战斗至多叠加24层）"},{"name":"维伊","tier":"Ⅳ","tierNum":4,"covs":["乌萨斯","奥术"],"traitType":"作战能力","trait1":"<战斗中>【乌萨斯】每叠加2层，本干员攻击速度+1","trait2":"<战斗中>【乌萨斯】每叠加1层，本干员攻击速度+1"},{"name":"温蒂","tier":"Ⅳ","tierNum":4,"covs":["伊比利亚","坚守"],"traitType":"整备能力","trait1":"售出价格为3","trait2":"售出价格为6"},{"name":"流明","tier":"Ⅳ","tierNum":4,"covs":["伊比利亚","聚合"],"traitType":"持续叠加","trait1":"<战斗结束时>每有一名存活的我方干员，使已激活的【伊比利亚】【聚合】层数+1","trait2":"<战斗结束时>每有一名存活的我方干员，使已激活的【伊比利亚】【聚合】层数+2"},{"name":"余","tier":"Ⅳ","tierNum":4,"covs":["炎","坚守"],"traitType":"持续叠加","trait1":"<战斗中>周围八格每有一名敌人触发元素损伤爆发使自身已激活的盟约层数+1（每回合至多叠加8层）","trait2":"<战斗中>周围八格每有一名敌人触发元素损伤爆发使自身已激活的盟约层数+2（每回合至多叠加16层）"},{"name":"森蚺","tier":"Ⅳ","tierNum":4,"covs":["萨尔贡","不屈"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【萨尔贡】【不屈】盟约层数+4（每回合至多叠加12层）","trait2":"<战斗中>部署时使已激活的【萨尔贡】【不屈】盟约层数+8（每回合至多叠加24层）"},{"name":"灵知","tier":"Ⅳ","tierNum":4,"covs":["谢拉格","迅捷"],"traitType":"整备能力","trait1":"<获得时>获得一次特殊刷新，下次刷新至少出现一名谢拉格干员","trait2":"<获得时>获得一次特殊刷新，下次刷新至少出现两名谢拉格干员"},{"name":"归溟幽灵鲨","tier":"Ⅳ","tierNum":4,"covs":["阿戈尔","不屈"],"traitType":"作战能力","trait1":"<战斗中>自身被击倒或与替身发生替换时使周围八格的【阿戈尔】干员回复5点技力","trait2":"<战斗中>自身被击倒或与替身发生替换时使周围八格的【阿戈尔】干员回复10点技力"},{"name":"水月","tier":"Ⅳ","tierNum":4,"covs":["阿戈尔","灵巧"],"traitType":"作战能力","trait1":"<战斗中>【阿戈尔】盟约每叠加20层，自身及周围四格干员每次造成伤害时使目标移动速度-1%，持续3秒","trait2":"<战斗中>【阿戈尔】盟约每叠加10层，自身及周围四格干员每次造成伤害时使目标移动速度-1%，持续3秒"},{"name":"远牙","tier":"Ⅳ","tierNum":4,"covs":["卡西米尔","精准"],"traitType":"作战能力","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使攻击范围内及整备区中的干员再部署时间-3秒","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使攻击范围内及整备区中的干员再部署时间-6秒"},{"name":"玛恩纳","tier":"Ⅳ","tierNum":4,"covs":["卡西米尔"],"traitType":"作战能力","trait1":"<战斗中>【卡西米尔】每叠加5层，本干员部署后100秒内基础攻击力+10、基础生命上限+50","trait2":"<战斗中>【卡西米尔】每叠加5层，本干员部署后100秒内基础攻击力+20、基础生命上限+100"},{"name":"涤火杰西卡","tier":"Ⅳ","tierNum":4,"covs":["维多利亚","坚守"],"traitType":"持续叠加","trait1":"<休整期结束时>场上每有一名携带装备的干员，使已激活的【维多利亚】【坚守】层数+2","trait2":"<休整期结束时>场上每有一名携带装备的干员，使已激活的【维多利亚】【坚守】层数+4"},{"name":"白铁","tier":"Ⅳ","tierNum":4,"covs":["维多利亚","助力"],"traitType":"整备能力","trait1":"<进入休整期时>使自身携带的装备变为精锐版本","trait2":""},{"name":"斥罪","tier":"Ⅳ","tierNum":4,"covs":["叙拉古","不屈"],"traitType":"作战能力","trait1":"<战斗中>【叙拉古】【不屈】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【叙拉古】【不屈】每叠加3层，本干员攻击力+2%"},{"name":"W","tier":"Ⅳ","tierNum":4,"covs":["迅捷"],"traitType":"作战能力","trait1":"<战斗中>【迅捷】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【迅捷】每叠加3层，本干员攻击力+2%"},{"name":"霍尔海雅","tier":"Ⅳ","tierNum":4,"covs":["奥术","精准"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使自身已激活的盟约层数+4（每场战斗至多叠加12层）","trait2":"<战斗中>每次开启技能时使自身已激活的盟约层数+8（每场战斗至多叠加24层）"},{"name":"山","tier":"Ⅳ","tierNum":4,"covs":["投资人"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"淬羽赫默","tier":"Ⅳ","tierNum":4,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使整备区每名干员已激活的盟约层数+1","trait2":"<休整期结束时>使整备区每名干员已激活的盟约层数+2"},{"name":"赫德雷","tier":"Ⅳ","tierNum":4,"covs":["突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【突袭】层数+4（每回合至多叠加16层）","trait2":"<战斗中>部署时使已激活的【突袭】层数+8（每回合至多叠加32层）"},{"name":"夜莺","tier":"Ⅳ","tierNum":4,"covs":["聚合","协防干员"],"traitType":"持续叠加","trait1":"<战斗结束时>每有一名存活的我方干员，使自身已激活的盟约层数+1","trait2":"<战斗结束时>每有一名存活的我方干员，使自身已激活的盟约层数+2"},{"name":"仇白","tier":"Ⅳ","tierNum":4,"covs":["炎","灵巧"],"traitType":"单次叠加","trait1":"<获得时>【炎】【灵巧】层数+6","trait2":"<获得时>【炎】【灵巧】层数+12"},{"name":"异客","tier":"Ⅳ","tierNum":4,"covs":["萨尔贡","奥术"],"traitType":"整备能力","trait1":"<进入休整期时>获得1件“盟约之币”或“萨尔贡浓茶”，有小概率发现“拟态物质”","trait2":"<进入休整期时>获得2件“盟约之币”或“萨尔贡浓茶”，有小概率发现“拟态物质”"},{"name":"安洁莉娜","tier":"Ⅳ","tierNum":4,"covs":["叙拉古","奇迹"],"traitType":"持续叠加","trait1":"<休整期结束时>本回合每进行过1次刷新，使已激活的【叙拉古】层数+2（每回合至多叠加8层），【奇迹】层数+1（每回合至多叠加4层）","trait2":"<休整期结束时>本回合每进行过1次刷新，使已激活的【叙拉古】层数+4（每回合至多叠加16层），【奇迹】层数+2（每回合至多叠加8层）"},{"name":"华法琳","tier":"Ⅳ","tierNum":4,"covs":["灵巧","聚合"],"traitType":"持续叠加","trait1":"<战斗开始时>使身前一格干员获得特质“<开启技能时>使自身已激活的盟约层数+1（每回合至多叠加7层）”","trait2":"<战斗开始时>使身前一格干员获得特质“<开启技能时>使自身已激活的盟约层数+2（每回合至多叠加14层）”"},{"name":"寒檀","tier":"Ⅳ","tierNum":4,"covs":["远见"],"traitType":"持续叠加","trait1":"<休整期结束时><休整期开始时>使已激活的【远见】层数+3","trait2":"<休整期结束时><休整期开始时>使已激活的【远见】层数+6"},{"name":"纯烬艾雅法拉","tier":"Ⅴ","tierNum":5,"covs":["聚合","莱塔尼亚","远见"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【聚合】层数+2（每场战斗至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【聚合】层数+4（每场战斗至多叠加40层）"},{"name":"怒潮凛冬","tier":"Ⅴ","tierNum":5,"covs":["乌萨斯","奇迹"],"traitType":"作战能力","trait1":"<战斗中>【乌萨斯】【奇迹】每叠加10层，本干员技力自然回复速度+0.1/秒，攻击力+1%","trait2":"<战斗中>【乌萨斯】【奇迹】每叠加10层，本干员技力自然回复速度+0.2/秒，攻击力+2%"},{"name":"艾丽妮","tier":"Ⅴ","tierNum":5,"covs":["伊比利亚"],"traitType":"作战能力","trait1":"<战斗中>周围12格每有一名敌人被击倒自身回复3点技力","trait2":"<战斗中>周围12格每有一名敌人被击倒自身回复6点技力"},{"name":"棘刺","tier":"Ⅴ","tierNum":5,"covs":["伊比利亚","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】叠加等同于场上所有干员售出价格的层数（每回合至多叠加12层）","trait2":"<休整期结束时>使已激活的【伊比利亚】叠加等同于场上所有干员售出价格2倍的层数（每回合至多叠加24层）"},{"name":"黍","tier":"Ⅴ","tierNum":5,"covs":["炎","远见"],"traitType":"单次叠加","trait1":"<获得时>【炎】层数+8，【远见】层数+4","trait2":"<获得时>【炎】层数+16，【远见】层数+8"},{"name":"佩佩","tier":"Ⅴ","tierNum":5,"covs":["萨尔贡","灵巧"],"traitType":"持续叠加","trait1":"<战斗中>周围八格每有一名敌人或干员进入沉睡或眩晕时使自身及身后一格干员已激活的盟约层数+1（每回合至多叠加9层）","trait2":"<战斗中>周围八格每有一名敌人或干员进入沉睡或眩晕时使自身及身后一格干员已激活的盟约层数+2（每回合至多叠加18层）"},{"name":"圣聆初雪","tier":"Ⅴ","tierNum":5,"covs":["谢拉格","奥术"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人陷入冻结自身回复1点技力，并使已激活的【谢拉格】层数+1（每回合至多叠加24层）","trait2":"<战斗中>攻击范围内每有一名敌人冻结自身回复2点技力，并使已激活的【谢拉格】层数+2（每回合至多叠加48层）"},{"name":"凛御银灰","tier":"Ⅴ","tierNum":5,"covs":["谢拉格","灵巧","投资人"],"traitType":"持续叠加","trait1":"<战斗中>身前一格【谢拉格】【灵巧】干员每场战斗的叠层上限+75%","trait2":"<战斗中>身前一格【谢拉格】【灵巧】干员每场战斗的叠层上限+150%"},{"name":"歌蕾蒂娅","tier":"Ⅴ","tierNum":5,"covs":["阿戈尔"],"traitType":"整备能力","trait1":"<进入休整期时>若同一行有3名干员，获得1个幽灵鲨、安哲拉、深巡或斯卡蒂","trait2":"<进入休整期时>获得1个幽灵鲨、安哲拉、深巡或斯卡蒂"},{"name":"乌尔比安","tier":"Ⅴ","tierNum":5,"covs":["阿戈尔"],"traitType":"作战能力","trait1":"<战斗中>部署时【阿戈尔】盟约每叠加20层，使自身及周围四格的干员攻击力+1%，持续30秒","trait2":"<战斗中>部署时【阿戈尔】盟约每叠加10层，使自身及周围四格的干员攻击力+1%，持续30秒"},{"name":"薇薇安娜","tier":"Ⅴ","tierNum":5,"covs":["莱塔尼亚","卡西米尔","奥术"],"traitType":"持续叠加","trait1":"<战斗中>场上其他与自身拥有相同盟约的干员在本回合战斗期的叠层上限+7","trait2":"<战斗中>场上其他与自身拥有相同盟约的干员在本回合战斗期的叠层上限+14"},{"name":"铃兰","tier":"Ⅴ","tierNum":5,"covs":["叙拉古"],"traitType":"特异化","trait1":"<进入休整期时>触发身前一格的其他干员的“获得时”类效果","trait2":"<进入休整期时>触发身前两格的其他干员的“获得时”类效果"},{"name":"贝洛内","tier":"Ⅴ","tierNum":5,"covs":["叙拉古","突袭"],"traitType":"作战能力","trait1":"<战斗中>【叙拉古】【突袭】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【叙拉古】【突袭】每叠加3层，本干员攻击力+2%"},{"name":"维娜·维多利亚","tier":"Ⅴ","tierNum":5,"covs":["维多利亚","奇迹"],"traitType":"持续叠加","trait1":"<休整期结束时>场上每有一名不同阶的【维多利亚】干员，使已激活的【维多利亚】【奇迹】层数+2","trait2":"<休整期结束时>场上每有一名不同阶的【维多利亚】干员，使已激活的【维多利亚】【奇迹】层数+4"},{"name":"迷迭香","tier":"Ⅴ","tierNum":5,"covs":["精准","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【精准】【助力】层数+10","trait2":"<休整期结束时>使已激活的【精准】【助力】层数+20"},{"name":"隐德来希","tier":"Ⅴ","tierNum":5,"covs":["灵巧","不屈"],"traitType":"作战能力","trait1":"<战斗中>【灵巧】【不屈】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【灵巧】【不屈】每叠加3层，本干员攻击力+2%"},{"name":"塞雷娅","tier":"Ⅴ","tierNum":5,"covs":["坚守","协防干员"],"traitType":"特异化","trait1":"身前一格干员若为“休整期结束时”特质，本干员的特质与其相同","trait2":""},{"name":"溯光星源","tier":"Ⅴ","tierNum":5,"covs":["奥术"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每消耗3资金，使已激活的【奥术】层数+2（每回合至多叠加18层）","trait2":"<休整期结束时> 本回合每消耗3资金，使已激活的【奥术】层数+4（每回合至多叠加36层）"},{"name":"老鲤","tier":"Ⅴ","tierNum":5,"covs":["投资人","炎"],"traitType":"作战能力","trait1":"<战斗中>【炎】【投资人】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【炎】【投资人】每叠加3层，本干员攻击力+2%"},{"name":"Mon3tr","tier":"Ⅴ","tierNum":5,"covs":["协防干员"],"traitType":"持续叠加","trait1":"<战斗中>周围八格干员每场战斗的叠层上限+30%","trait2":"<战斗中>周围八格干员每场战斗的叠层上限+60%"},{"name":"可露希尔","tier":"Ⅴ","tierNum":5,"covs":["投资人"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【投资人】层数+2（每回合至多叠加16层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【投资人】层数+4（每回合至多叠加32层）"},{"name":"“暴躁铁皮”","tier":"Ⅴ","tierNum":5,"covs":["协防干员"],"traitType":"作战能力","trait1":"<战斗中>攻击力和生命上限+60%","trait2":"<战斗中>攻击力和生命上限+120%"},{"name":"鸿雪","tier":"Ⅴ","tierNum":5,"covs":["萨尔贡","精准"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】【精准】层数+4（每回合至多叠加16层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】【精准】层数+8（每回合至多叠加32层）"},{"name":"焰尾","tier":"Ⅴ","tierNum":5,"covs":["卡西米尔","迅捷"],"traitType":"持续叠加","trait1":"<休整期结束时>整备区每有一名干员，使已激活的【卡西米尔】【迅捷】层数+1","trait2":"<休整期结束时>整备区每有一名干员，使已激活的【卡西米尔】【迅捷】层数+2"},{"name":"冻河","tier":"Ⅴ","tierNum":5,"covs":["乌萨斯","迅捷"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【乌萨斯】【迅捷】层数+1（每场战斗至多叠加16层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【乌萨斯】【迅捷】层数+2（每场战斗至多叠加32层）"},{"name":"阿米娅","tier":"Ⅴ","tierNum":5,"covs":["奇迹"],"traitType":"持续叠加","trait1":"<战斗中>身前一格干员提升盟约层数时，每次提升的层数额外+1（不受叠层上限影响）","trait2":"<战斗中>身前一格干员提升盟约层数时，每次提升的层数额外+2（不受叠层上限影响）"},{"name":"引星棘刺","tier":"Ⅵ","tierNum":6,"covs":["伊比利亚","迅捷"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】【迅捷】层数+12","trait2":"<休整期结束时>使已激活的【伊比利亚】【迅捷】层数+24"},{"name":"烛煌","tier":"Ⅵ","tierNum":6,"covs":["炎","维多利亚","迅捷"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人触发元素损伤爆发使已激活的【炎】【维多利亚】层数+1（每回合至多叠加12层）","trait2":"<战斗中>攻击范围内每有一名敌人触发元素损伤爆发使已激活的【炎】【维多利亚】层数+2（每回合至多叠加24层）"},{"name":"浊心斯卡蒂","tier":"Ⅵ","tierNum":6,"covs":["阿戈尔","聚合"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名我方干员部署使已激活的【阿戈尔】层数+2（每场战斗至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名我方干员部署使已激活的【阿戈尔】层数+4（每场战斗至多叠加40层）"},{"name":"克莱门莎","tier":"Ⅵ","tierNum":6,"covs":["阿戈尔"],"traitType":"作战能力","trait1":"<战斗开始时>【阿戈尔】盟约每叠加20层，使场上所有敌人侵蚀损伤冷却恢复速度+1%","trait2":"<战斗开始时>【阿戈尔】盟约每叠加10层，使场上所有敌人侵蚀损伤冷却恢复速度+1%"},{"name":"耀骑士临光","tier":"Ⅵ","tierNum":6,"covs":["卡西米尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>被击倒时召唤整备区最右侧的【卡西米尔】【突袭】干员上场，并使自身及被召唤干员已激活的盟约层数+6（每名干员每回合至多叠加12层）","trait2":"<战斗中>被击倒时召唤整备区最右侧的【卡西米尔】【突袭】干员上场，并使自身及被召唤干员已激活的盟约层数+12（每名干员每回合至多叠加24层）"},{"name":"荒芜拉普兰德","tier":"Ⅵ","tierNum":6,"covs":["叙拉古"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人使已激活的【叙拉古】层数+2（每场战斗至多叠加20层）；（晋升为精锐状态时，使所有【叙拉古】干员获得此效果）","trait2":"<战斗中>所有【叙拉古】干员每击倒一名敌人使已激活的【叙拉古】层数+4（每场战斗至多叠加40层）"},{"name":"酒神","tier":"Ⅵ","tierNum":6,"covs":["维多利亚"],"traitType":"整备能力","trait1":"<进入休整期时>获得一件随机装备（不高于当前调度中心等级）","trait2":"<进入休整期时>获得两件随机装备（不高于当前调度中心等级）"},{"name":"逻各斯","tier":"Ⅵ","tierNum":6,"covs":["奥术","远见"],"traitType":"持续叠加","trait1":"<获得时>【奥术】层数+10，【远见】层数+5；<战斗中>【奥术】【远见】每叠加3层，本干员攻击速度+1","trait2":"<获得时>【奥术】层数+20，【远见】层数+10；<战斗中>【奥术】【远见】每叠加3层，本干员攻击速度+2"},{"name":"真言","tier":"Ⅵ","tierNum":6,"covs":["萨尔贡"],"traitType":"作战能力","trait1":"<战斗中>【萨尔贡】每叠加5层，本干员攻击力+1%","trait2":"<战斗中>【萨尔贡】每叠加5层，本干员攻击力+2%"},{"name":"妮芙","tier":"Ⅵ","tierNum":6,"covs":["迅捷","远见"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人陷入恐惧使已激活的【迅捷】层数+4（每回合至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名敌人陷入恐惧使已激活的【迅捷】层数+8（每回合至多叠加40层）"},{"name":"遥","tier":"Ⅵ","tierNum":6,"covs":["聚合","奇迹"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【聚合】【奇迹】层数+1（每回合至多叠加12层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【聚合】【奇迹】层数+2（每回合至多叠加24层）"},{"name":"魔王","tier":"Ⅵ","tierNum":6,"covs":["调和"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的核心盟约层数+10","trait2":"<休整期结束时>使已激活的核心盟约层数+20"},{"name":"史尔特尔","tier":"Ⅵ","tierNum":6,"covs":["突袭","不屈"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人使已激活的【突袭】【不屈】层数+4（每回合至多叠加16层）","trait2":"<战斗中>每击倒一名敌人使已激活的【突袭】【不屈】层数+8（每回合至多叠加32层）"},{"name":"锏","tier":"Ⅵ","tierNum":6,"covs":["卡西米尔","谢拉格","莱塔尼亚"],"traitType":"作战能力","trait1":"<战斗中>【卡西米尔】【谢拉格】【莱塔尼亚】每叠加6层，本干员技力自然回复速度+0.01/秒，生命上限+1%","trait2":"<战斗中>【卡西米尔】【谢拉格】【莱塔尼亚】每叠加3层，本干员技力自然回复速度+0.01/秒，生命上限+1%"},{"name":"机械师","tier":"Ⅵ","tierNum":6,"covs":["协防干员","坚守"],"traitType":"整备能力","trait1":"<进入休整期时>若同一行至少有三名干员，获得一名当前人数最多盟约的干员","trait2":"<进入休整期时>获得一名当前人数最多盟约的干员"},{"name":"塔露拉","tier":"Ⅵ","tierNum":6,"covs":["乌萨斯","奥术","协防干员"],"traitType":"持续叠加","trait1":"<战斗中>【乌萨斯】盟约获得强化：击倒单位时叠加的临时层数提升至4层；在场6名不同【乌萨斯】干员时，提升至6层","trait2":"<战斗中>【乌萨斯】盟约获得强化：击倒单位时叠加的临时层数提升至6层；在场6名不同【乌萨斯】干员时，提升至8层"},{"name":"夕","tier":"Ⅵ","tierNum":6,"covs":["炎","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【奥术】层数+2（每回合至多叠加24层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【奥术】层数+4（每回合至多叠加48层）"},{"name":"蕾缪安","tier":"Ⅵ","tierNum":6,"covs":["精准"],"traitType":"作战能力","trait1":"<战斗中>【精准】每叠加4层，本干员技力自然回复速度+0.01/秒","trait2":"<战斗中>【精准】每叠加2层，本干员技力自然回复速度+0.01/秒"},{"name":"缪尔赛思","tier":"Ⅵ","tierNum":6,"covs":["协防干员"],"traitType":"整备能力","trait1":"<获得时>获得一个“变形同构体”","trait2":"<获得时>获得两个“变形同构体”"},{"name":"帕拉斯","tier":"Ⅵ","tierNum":6,"covs":["灵巧","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身以及身前一格干员已激活的盟约层数+9","trait2":"<休整期结束时>使自身以及身前一格干员已激活的盟约层数+18"}],"avatars":{},"icons":{},"art":{"avatarIds":{"折桠":"char_4207_branch","艾丝黛尔":"char_127_estell","幽灵鲨":"char_143_ghost","野鬃":"char_496_wildmn","慕斯":"char_185_frncat","角峰":"char_199_yak","灰喉":"char_367_swllow","深靛":"char_469_indigo","卡达":"char_328_cammou","摆渡人":"char_4166_varkis","夏栎":"char_492_quercu","杰克":"char_347_jaksel","霜叶":"char_193_frostl","拜松":"char_325_bison","褐果":"char_4041_chnut","烈夏":"char_194_leto","陨星":"char_219_meteo","拉普兰德":"char_140_whitew","地灵":"char_183_skgoat","折光":"char_499_kaitou","蓝毒":"char_129_bluep","泡泡":"char_381_bubble","莎草":"char_4139_papyrs","雪猎":"char_4211_snhunt","砾":"char_237_gravel","复奏":"char_4031_liesel","奥斯塔":"char_346_aosta","Miss.Christine":"char_4198_christ","哈洛德":"char_4114_harold","云迹":"char_4165_ctrail","蛇屠箱":"char_150_snakek","波登可":"char_258_podego","承曦格雷伊":"char_1027_greyy2","锡人":"char_4151_tinman","宴":"char_337_utage","渡桥":"char_4147_mitm","矩":"char_4221_ju","星极":"char_274_astesi","瑰盐":"char_4163_rosesa","真理":"char_195_glassb","铸铁":"char_333_sidero","星源":"char_135_halo","安哲拉":"char_218_cuttle","车尔尼":"char_4047_pianst","卡涅利安":"char_426_billro","乌啾":"char_4224_turdus","海沫":"char_4066_highmo","旅骨":"char_4232_hbound","风絮":"char_4222_taraxa","极光":"char_422_aurora","耶拉":"char_4013_kjera","初雪":"char_174_slbell","深巡":"char_4137_udflow","斯卡蒂":"char_263_skadi","瑕光":"char_423_blemsh","忍冬":"char_4026_vulpis","伺夜":"char_427_vigil","水灯心":"char_4177_brigid","空弦":"char_332_archet","吉星":"char_4203_kichi","伊桑":"char_355_ethan","罗比菈塔":"char_484_robrta","乌有":"char_455_nothin","历阵锐枪芬":"char_1036_fang2","凯瑟琳":"char_4162_cathy","盟约·辅助干员":"char_616_pithst","风丸":"char_4016_kazema","至简":"char_4054_malist","奥尔佳":"char_4245_alga","青枳":"char_488_buildr","黑键":"char_4046_ebnhlz","艾雅法拉":"char_180_amgoat","赫拉格":"char_188_helage","维伊":"char_4226_veen","温蒂":"char_400_weedy","流明":"char_4042_lumen","余":"char_2026_yu","森蚺":"char_416_zumama","灵知":"char_206_gnosis","归溟幽灵鲨":"char_1023_ghost2","水月":"char_437_mizuki","远牙":"char_430_fartth","玛恩纳":"char_4064_mlynar","涤火杰西卡":"char_1034_jesca2","白铁":"char_4072_ironmn","斥罪":"char_4065_judge","W":"char_113_cqbw","霍尔海雅":"char_4027_heyak","山":"char_264_f12yin","淬羽赫默":"char_1031_slent2","赫德雷":"char_4088_hodrer","夜莺":"char_179_cgbird","仇白":"char_4082_qiubai","异客":"char_472_pasngr","安洁莉娜":"char_291_aglina","华法琳":"char_171_bldsk","寒檀":"char_341_sntlla","纯烬艾雅法拉":"char_1016_agoat2","怒潮凛冬":"char_1051_headb2","艾丽妮":"char_4009_irene","棘刺":"char_293_thorns","黍":"char_2025_shu","佩佩":"char_4058_pepe","圣聆初雪":"char_1046_sbell2","凛御银灰":"char_1045_svash2","歌蕾蒂娅":"char_474_glady","乌尔比安":"char_4145_ulpia","薇薇安娜":"char_4098_vvana","铃兰":"char_358_lisa","贝洛内":"char_4037_demetr","维娜·维多利亚":"char_1019_siege2","迷迭香":"char_391_rosmon","隐德来希":"char_4010_etlchi","塞雷娅":"char_202_demkni","溯光星源":"char_1047_halo2","老鲤":"char_322_lmlee","Mon3tr":"char_4179_monstr","可露希尔":"char_4228_closur","“暴躁铁皮”":"char_618_acrbot","鸿雪":"char_4055_bgsnow","焰尾":"char_420_flamtl","冻河":"char_4244_tocka","阿米娅":"char_002_amiya","引星棘刺":"char_1039_thorn2","烛煌":"char_1040_blaze2","浊心斯卡蒂":"char_1012_skadi2","克莱门莎":"char_4231_clemnt","耀骑士临光":"char_1014_nearl2","荒芜拉普兰德":"char_1038_whitw2","酒神":"char_1042_phatm2","逻各斯":"char_4133_logos","真言":"char_4204_mantra","妮芙":"char_4146_nymph","遥":"char_4202_haruka","魔王":"char_4134_cetsyr","史尔特尔":"char_350_surtr","锏":"char_4116_blkkgt","机械师":"char_4230_mcnist","塔露拉":"char_4247_oxi","夕":"char_2015_dusk","蕾缪安":"char_4193_lemuen","缪尔赛思":"char_249_mlyss","帕拉斯":"char_485_pallas"},"bases":["https://cdn.jsdelivr.net/gh/yuanyan3060/ArknightsGameResource@main/avatar/","https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/"]}};</script>
+<script>window.__DATA__ = {"meta":{"season":"规程·序列Ⅰ","version":"1.4.1","fetchedAt":"2026-11-18","counts":{"ops":143,"covs":26},"avatarCount":0,"iconCount":0},"covenants":[{"id":"c01","name":"炎","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3炎","body":"干员攻击力+23%+0.9*层数"},{"at":6,"label":"6炎","body":"战斗开始时，[炎]干员每次攻击时造成攻击力6%的随机元素损伤；全场敌人元素损伤恢复速度增加40%+0.3*层数"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c02","name":"萨尔贡","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3萨尔贡","body":"干员开启技能时，所有[萨尔贡]干员攻击速度+12(至多+300)，持续5+0.22*层数秒"},{"at":6,"label":"6萨尔贡","body":"[萨尔贡]干员每次开启技能时，在攻击范围内制造一个流沙地面。位于流沙地面上的敌人受到20%+0.025*层数(上限60%)的迟钝效果，每5秒造成一次5000+25*层数点法术伤害并束缚1秒；[萨尔贡]干员技能持续期间，攻击范围内的流沙地面使敌人的迟钝效果变为2倍，每秒受到800+4*层数点法术伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c03","name":"维多利亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3维多利亚","body":"携带装备的[维多利亚]干员伤害提升至125%+0.8*层数"},{"at":6,"label":"6维多利亚","body":"[维多利亚]干员每携带1件装备攻击力+40%，携带进阶装备改为+80%"}],"layerGates":[{"label":"每叠加25层","body":"获得一件带有随机特殊效果的维式重锤"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c04","name":"谢拉格","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3谢拉格","body":"干员伤害提升至125%，对寒冷和冻结敌人额外提升至135%+1*层数"},{"at":6,"label":"6谢拉格","body":"战斗开始时召唤可自主行动的雪山巨人，其攻击力和生命值随谢拉格层数提升而提升。雪山巨人将在巨人和雪山形态转换，雪山形态可以阻挡敌人并造成溅射伤害，雪山形态攻击被冻结的敌人时造成高额法术伤害并解除目标的冻结状态；巨人形态可以移动并对敌人造成远程溅射伤害"}],"layerGates":[{"label":"每叠加100层","body":"获得一件谢拉格不融冰"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c05","name":"阿戈尔","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3阿戈尔","body":"干员生命值+35%+1*层数；战斗开始时[阿戈尔]干员依次吞噬身前一格干员造成5000点物理伤害并获得其基础攻击力和阻挡数，并叠加等于被吞噬者等阶的盟约层数([阿戈尔]之间优先对更靠左和靠上的干员发起吞噬)"},{"at":6,"label":"6阿戈尔","body":"前3名[阿戈尔]干员首次被击倒时立刻复活"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c06","name":"叙拉古","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3叙拉古","body":"干员部署后攻击速度+25+0.8*层数，持续32+0.4*层数秒"},{"at":6,"label":"6叙拉古","body":"每次攻击时有30%概率为敌人随机附加一个异常状态，持续1+0.0018*层数秒；敌人存在2种或以上异常状态时，每秒对自身及周围一定范围内的敌人造成800+10*层数点真实伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c07","name":"卡西米尔","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3卡西米尔","body":"每次有干员部署时[卡西米尔]干员攻击力+20%(至多+50%+1*层数)，持续至战斗结束"},{"at":6,"label":"6卡西米尔","body":"[卡西米尔]地面干员被击倒时离场并召唤整备区最右侧[卡西米尔]干员加入战斗(不改变当前盟约的激活状态)；[卡西米尔]干员开启技能或部署后30秒内攻击时附带攻击力65%的真实伤害"}],"layerGates":[],"notes":[],"countRule":"bench-right","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c08","name":"乌萨斯","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3乌萨斯","body":"干员攻击力+35%+0.75*层数，生命值+10%+0.3*层数，[乌萨斯]干员击倒其他单位时为[乌萨斯]叠加2层临时层数"},{"at":6,"label":"6乌萨斯","body":"[乌萨斯]干员受到伤害的15%+0.05*层数(上限100%)转化为10秒的生命流失，当伤害来源被击倒时不再流失生命；阻挡敌人期间，敌人每秒受到相当于攻击力50%+0.25*层数的法术伤害；[乌萨斯]干员击倒其他单位时叠加的临时层数提升至4层"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c09","name":"伊比利亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3伊比利亚","body":"干员或炼金单元每次造成伤害时，使目标每秒受到11%+0.06*层数攻击力(至多叠加10次)的持续法术伤害，持续10秒"},{"at":6,"label":"6伊比利亚","body":"[伊比利亚]干员或炼金单元造成伤害时附带的持续法术伤害提升至2倍，并使目标移动速度-4%(至多-80%)，持续10秒；[伊比利亚]干员或炼金单元每次造成伤害时有20%概率弹射到周围一定范围内的敌人造成300%攻击力的法术伤害"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c10","name":"莱塔尼亚","kind":"核心","thresholds":[3,6],"tiers":[{"at":3,"label":"3莱塔尼亚","body":"干员和召唤物攻击力+30%+1*层数，场上敌人被击倒时在附近召唤“一个小节”(场上最多存在10个)"},{"at":6,"label":"6莱塔尼亚","body":"召唤“一个小节”时30%+0.1*层数(上限100%)概率改为召唤“一个乐部”，在场时使[莱塔尼亚]干员攻速+20；场上[莱塔尼亚]召唤物上限提升至20；场上我方干员被击倒时会额外召唤“一个小节”"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c11","name":"精准","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2精准","body":"干员攻击力+10%+1.2*层数"},{"at":3,"label":"3精准","body":"生效范围变为[精准]干员和所有远程干员，且攻击无视30%防御力和法术抗性"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c12","name":"迅捷","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2迅捷","body":"干员技能结束时有20%+0.35*层数(上限100%)概率立刻回复12点技力"}],"layerGates":[{"label":"40层","body":"所有干员技能结束时有等概率额外回复15点技力"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c13","name":"灵巧","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2灵巧","body":"干员及周围4格的干员攻击速度+10+1*层数"}],"layerGates":[{"label":"40层","body":"生效范围变为[灵巧]干员周围8格"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c14","name":"坚守","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2坚守","body":"所有干员生命值+25%+1.2*层数"},{"at":3,"label":"3坚守","body":"场上非[坚守]干员受到伤害时，所受伤害的40%由[坚守]干员平均承担；[坚守]干员受到伤害时，伤害来源受到850+10*层数点法术伤害(每0.2秒至多触发1次)和持续5秒的40%的脆弱效果"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c15","name":"助力","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2助力","body":"所有干员防御力+15%+1.2*层数，再部署时间-30%；休整期结束时，使当前所有已激活的盟约层数+2"},{"at":3,"label":"3助力","body":"改为层数+4"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c16","name":"远见","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2远见","body":"每叠加10层，获得一次2资金"}],"layerGates":[{"label":"首次到达80层","body":"所有[远见]干员购买价格永久-1资金"},{"label":"首次到达150层","body":"所有[远见]干员购买价格额外永久-1资金"}],"notes":["整备区的[远见]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c17","name":"奇迹","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2奇迹","body":"刷新调度中心时，有18%+0.25*层数(上限100%)概率使下次刷新不消耗资金"}],"layerGates":[{"label":"首次到达100层","body":"调度中心刷新时至少出现一名等同于当前调度中心等级的干员"}],"notes":["整备区的[奇迹]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c18","name":"投资人","kind":"附加","thresholds":[3],"tiers":[{"at":3,"label":"3投资人","body":"干员的“获得时”类特质每次触发2次"}],"layerGates":[{"label":"100层","body":"“获得时”类特质每次触发3次"}],"notes":["整备区的[投资人]干员也可用于激活盟约"],"countRule":"field+bench","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c19","name":"突袭","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2突袭","body":"干员10秒内未进行攻击或技能就绪时，若范围内没有敌人，则保留技力立即再部署至一名地面敌人周围，期间攻击力和生命值+25%+1*层数"}],"layerGates":[{"label":"50层","body":"所有干员攻击速度+50"}],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c20","name":"不屈","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2不屈","body":"地面干员被击倒时，有18%+0.4*层数(上限100%)概率立刻重新部署"},{"at":3,"label":"3不屈","body":"地面干员被击倒时使场上所有干员技力+5"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c21","name":"调和","kind":"附加","thresholds":[1],"tiers":[{"at":1,"label":"1调和","body":"激活时可以使场上核心盟约的激活人数+1，[调和]干员享受已激活的核心盟约的效果"}],"layerGates":[],"notes":[],"countRule":"harmony","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c22","name":"协防干员","kind":"附加","thresholds":[2],"tiers":[{"at":2,"label":"2协防干员","body":"所有干员受到的物理和法术伤害-20%；[协防干员]伤害提升至120%，精锐[协防干员]造成伤害提升至140%"}],"layerGates":[],"notes":[],"countRule":"fallback","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c23","name":"独行","kind":"附加","thresholds":[1],"tiers":[{"at":1,"label":"1独行","body":"干员攻击力和生命值+60%，初始技力+15(在场2名及以上[独行]干员时失效)"}],"layerGates":[],"notes":[],"countRule":"solo","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c24","name":"绝技","kind":"附加","thresholds":[2,5],"tiers":[{"at":2,"label":"2精锐","body":"精锐状态的干员攻击力+30%"},{"at":5,"label":"5精锐","body":"精锐状态的干员技力消耗-30%"}],"layerGates":[],"notes":[],"countRule":"elite","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c25","name":"聚合","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2聚合","body":"干员攻击范围内的我方单位每秒回复攻击力16%+0.12*层数的生命值和攻击力8%+0.06*层数的元素损伤"},{"at":3,"label":"3聚合","body":"[聚合]干员攻击范围内的所有干员获得15%+0.08*层数的庇护"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"},{"id":"c26","name":"奥术","kind":"附加","thresholds":[2,3],"tiers":[{"at":2,"label":"2奥术","body":"干员造成伤害时额外附加一次20%+0.4*层数攻击力的法术伤害"},{"at":3,"label":"3奥术","body":"场上所有敌人每次受到伤害时法术抗性-1(累计降幅上限为30+0.05*层数点，最多降低100点)；[奥术]干员攻击范围内的敌人隐匿效果失效"}],"layerGates":[],"notes":[],"countRule":"field","source":"https://nga.178.com/read.php?tid=47877197"}],"operators":[{"name":"折桠","tier":"Ⅰ","tierNum":1,"covs":["乌萨斯","不屈"],"traitType":"持续叠加","trait1":"<进入休整期时>转化2层【乌萨斯】临时层数为固定层数","trait2":"<进入休整期时>转化4层【乌萨斯】临时层数为固定层数"},{"name":"艾丝黛尔","tier":"Ⅰ","tierNum":1,"covs":["萨尔贡","独行"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】层数+1（每回合至多叠加2层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】层数+2（每回合至多叠加4层）"},{"name":"幽灵鲨","tier":"Ⅰ","tierNum":1,"covs":["阿戈尔"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【阿戈尔】层数+1（每回合至多叠加1层）","trait2":"<战斗中>部署时使已激活的【阿戈尔】层数+2（每回合至多叠加2层）"},{"name":"野鬃","tier":"Ⅰ","tierNum":1,"covs":["卡西米尔","助力"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【卡西米尔】层数+1（每回合至多叠加2层）","trait2":"<战斗中>部署时使已激活的【卡西米尔】层数+2（每回合至多叠加4层）"},{"name":"慕斯","tier":"Ⅰ","tierNum":1,"covs":["维多利亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【维多利亚】层数+1","trait2":"<休整期结束时>使已激活的【维多利亚】层数+2"},{"name":"角峰","tier":"Ⅰ","tierNum":1,"covs":["谢拉格","坚守"],"traitType":"作战能力","trait1":"<战斗中>对每名敌人首次造成伤害时使目标陷入2秒寒冷","trait2":"<战斗中>对每名敌人首次造成伤害时使目标陷入4秒寒冷"},{"name":"灰喉","tier":"Ⅰ","tierNum":1,"covs":["精准"],"traitType":"单次叠加","trait1":"<获得时>【精准】层数+2","trait2":"<获得时>【精准】层数+4"},{"name":"深靛","tier":"Ⅰ","tierNum":1,"covs":["伊比利亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】层数+2","trait2":"<休整期结束时>使已激活的【伊比利亚】层数+4"},{"name":"卡达","tier":"Ⅰ","tierNum":1,"covs":["奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【奥术】层数+1","trait2":"<休整期结束时>使已激活的【奥术】层数+2"},{"name":"摆渡人","tier":"Ⅰ","tierNum":1,"covs":["坚守","不屈"],"traitType":"单次叠加","trait1":"<获得时>【坚守】【不屈】层数+1","trait2":"<获得时>【坚守】【不屈】层数+2"},{"name":"夏栎","tier":"Ⅰ","tierNum":1,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使当前已激活且层数最多的盟约层数+1（此干员在整备区也生效）","trait2":"<休整期结束时>使当前已激活且层数最多的盟约层数+2（此干员在整备区也生效）"},{"name":"杰克","tier":"Ⅰ","tierNum":1,"covs":["突袭"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"霜叶","tier":"Ⅰ","tierNum":1,"covs":["灵巧"],"traitType":"单次叠加","trait1":"<获得时>【灵巧】层数+2","trait2":"<获得时>【灵巧】层数+4"},{"name":"拜松","tier":"Ⅰ","tierNum":1,"covs":["炎"],"traitType":"单次叠加","trait1":"<获得时>【炎】层数+2","trait2":"<获得时>【炎】层数+4"},{"name":"褐果","tier":"Ⅰ","tierNum":1,"covs":["聚合"],"traitType":"单次叠加","trait1":"<获得时>【聚合】层数+2","trait2":"<获得时>【聚合】层数+4"},{"name":"烈夏","tier":"Ⅰ","tierNum":1,"covs":["乌萨斯"],"traitType":"持续叠加","trait1":"<战斗开始时>使已激活的【乌萨斯】临时层数+4","trait2":"<战斗开始时>使已激活的【乌萨斯】临时层数+8"},{"name":"陨星","tier":"Ⅰ","tierNum":1,"covs":["迅捷"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【迅捷】层数+1（每回合至多叠加2层）","trait2":"<战斗中>每次开启技能时使已激活的【迅捷】层数+2（每回合至多叠加4层）"},{"name":"拉普兰德","tier":"Ⅰ","tierNum":1,"covs":["叙拉古"],"traitType":"单次叠加","trait1":"<获得时>【叙拉古】层数+2","trait2":"<获得时>【叙拉古】层数+4"},{"name":"地灵","tier":"Ⅰ","tierNum":1,"covs":["莱塔尼亚","独行"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】层数+1（每回合至多叠加1层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】层数+2（每回合至多叠加2层）"},{"name":"折光","tier":"Ⅱ","tierNum":2,"covs":["莱塔尼亚"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【莱塔尼亚】层数+4","trait2":"<休整期结束时>使已激活的【莱塔尼亚】层数+8"},{"name":"蓝毒","tier":"Ⅱ","tierNum":2,"covs":["伊比利亚"],"traitType":"作战能力","trait1":"<战斗中>【伊比利亚】每叠加2层，本干员攻击力+1%","trait2":"<战斗中>【伊比利亚】每叠加1层，本干员攻击力+1%"},{"name":"泡泡","tier":"Ⅱ","tierNum":2,"covs":["萨尔贡","坚守"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】【坚守】层数+2（每回合至多叠加4层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】【坚守】层数+4（每回合至多叠加8层）"},{"name":"莎草","tier":"Ⅱ","tierNum":2,"covs":["萨尔贡","聚合"],"traitType":"作战能力","trait1":"<战斗中>每次开启技能时使身前一格干员回复2点技力","trait2":"<战斗中>每次开启技能时使身前一格干员回复4点技力"},{"name":"雪猎","tier":"Ⅱ","tierNum":2,"covs":["谢拉格","精准"],"traitType":"单次叠加","trait1":"<获得时>【谢拉格】【精准】层数+4","trait2":"<获得时>【谢拉格】【精准】层数+8"},{"name":"砾","tier":"Ⅱ","tierNum":2,"covs":["卡西米尔","不屈"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【卡西米尔】【不屈】层数+2（每场战斗至多叠加12层）","trait2":"<战斗中>部署时使已激活的【卡西米尔】【不屈】层数+4（每场战斗至多叠加24层）"},{"name":"复奏","tier":"Ⅱ","tierNum":2,"covs":["莱塔尼亚","叙拉古","奇迹"],"traitType":"持续叠加","trait1":"<刷新时>若为本回合首次主动刷新，使已激活的【莱塔尼亚】【叙拉古】层数+2（此干员在整备区也生效）","trait2":"<刷新时>若为本回合首次主动刷新，使已激活的【叙拉古】【莱塔尼亚】层数+4（此干员在整备区也生效）"},{"name":"奥斯塔","tier":"Ⅱ","tierNum":2,"covs":["叙拉古"],"traitType":"整备能力","trait1":"<获得时>获得一次免费刷新","trait2":"<获得时>获得两次免费刷新"},{"name":"Miss.Christine","tier":"Ⅱ","tierNum":2,"covs":["维多利亚","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【维多利亚】【奥术】层数+3","trait2":"<休整期结束时>使已激活的【维多利亚】【奥术】层数+6"},{"name":"哈洛德","tier":"Ⅱ","tierNum":2,"covs":["维多利亚","谢拉格"],"traitType":"作战能力","trait1":"<战斗中>【维多利亚】【谢拉格】每叠加5层，本干员攻击力+1%","trait2":"<战斗中>【维多利亚】【谢拉格】每叠加5层，本干员攻击力+2%"},{"name":"云迹","tier":"Ⅱ","tierNum":2,"covs":["灵巧","奇迹"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使自身已激活的盟约层数+3（每回合至多叠加6层）","trait2":"<战斗中>每次开启技能时使自身已激活的盟约层数+6（每回合至多叠加12层）"},{"name":"蛇屠箱","tier":"Ⅱ","tierNum":2,"covs":["坚守"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【坚守】层数+4","trait2":"<休整期结束时>使已激活的【坚守】层数+8"},{"name":"波登可","tier":"Ⅱ","tierNum":2,"covs":["聚合","迅捷"],"traitType":"整备能力","trait1":"<售出时>下回合额外获得1资金","trait2":"<售出时>下回合额外获得2资金"},{"name":"承曦格雷伊","tier":"Ⅱ","tierNum":2,"covs":["精准","灵巧"],"traitType":"整备能力","trait1":"<获得时>获得一件精准狙击镜","trait2":"<获得时>获得两件精准狙击镜"},{"name":"锡人","tier":"Ⅱ","tierNum":2,"covs":["投资人"],"traitType":"单次叠加","trait1":"<获得时>【投资人】层数+4","trait2":"<获得时>【投资人】层数+8"},{"name":"宴","tier":"Ⅱ","tierNum":2,"covs":["不屈"],"traitType":"单次叠加","trait1":"<获得时>【不屈】层数+4","trait2":"<获得时>【不屈】层数+8"},{"name":"渡桥","tier":"Ⅱ","tierNum":2,"covs":["远见"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身及身前一格干员已激活的盟约层数+2","trait2":"<休整期结束时>使自身及身前一格干员已激活的盟约层数+4"},{"name":"矩","tier":"Ⅱ","tierNum":2,"covs":["炎"],"traitType":"单次叠加","trait1":"<获得时>获得等同于当前调度中心等级的【炎】层数","trait2":"<获得时>获得等同于当前调度中心等级两倍的【炎】层数"},{"name":"星极","tier":"Ⅱ","tierNum":2,"covs":["奇迹"],"traitType":"作战能力","trait1":"只需两名本干员即可合成精锐","trait2":""},{"name":"瑰盐","tier":"Ⅱ","tierNum":2,"covs":["伊比利亚","聚合"],"traitType":"作战能力","trait1":"<战斗中>【伊比利亚】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【伊比利亚】每叠加3层，本干员攻击力+2%"},{"name":"真理","tier":"Ⅱ","tierNum":2,"covs":["乌萨斯"],"traitType":"整备能力","trait1":"购买价格为1","trait2":""},{"name":"铸铁","tier":"Ⅱ","tierNum":2,"covs":["突袭"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【突袭】层数+3","trait2":"<休整期结束时>使已激活的【突袭】层数+6"},{"name":"星源","tier":"Ⅱ","tierNum":2,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使当前已激活且层数最多的盟约层数+2（此干员在整备区也生效）","trait2":"<休整期结束时>使当前已激活且层数最多的盟约层数+4（此干员在整备区也生效）"},{"name":"安哲拉","tier":"Ⅱ","tierNum":2,"covs":["阿戈尔","助力"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人或我方干员使已激活的【阿戈尔】【助力】层数+3（每回合至多叠加9层）","trait2":"<战斗中>每击倒一名敌人或我方干员使已激活的【阿戈尔】【助力】层数+6（每回合至多叠加18层）"},{"name":"车尔尼","tier":"Ⅲ","tierNum":3,"covs":["莱塔尼亚","坚守"],"traitType":"整备能力","trait1":"<获得时>获得一件“莱塔尼亚小鼓”","trait2":"<获得时>获得两件“莱塔尼亚小鼓”"},{"name":"卡涅利安","tier":"Ⅲ","tierNum":3,"covs":["莱塔尼亚","萨尔贡","迅捷"],"traitType":"整备能力","trait1":"<获得时>获得一件“迅捷作战粮”","trait2":"<获得时>获得两件“迅捷作战粮”"},{"name":"乌啾","tier":"Ⅲ","tierNum":3,"covs":["乌萨斯","聚合"],"traitType":"持续叠加","trait1":"<进入休整期时>场上每有一名【乌萨斯】干员，转化1层【乌萨斯】临时层数为固定层数","trait2":"<进入休整期时>场上每有一名【乌萨斯】干员，转化2层【乌萨斯】临时层数为固定层数"},{"name":"海沫","tier":"Ⅲ","tierNum":3,"covs":["伊比利亚","不屈"],"traitType":"整备能力","trait1":"<休整期结束时>自身售出价格+1（自身售出价格至多为4）","trait2":"<休整期结束时>自身售出价格+2（自身售出价格至多为8）"},{"name":"旅骨","tier":"Ⅲ","tierNum":3,"covs":["伊比利亚","精准"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身及身前一格干员已激活的盟约叠加等同于其售出价格的层数","trait2":"<休整期结束时>使自身及身前一格干员已激活的盟约叠加等同于其售出价格2倍的层数"},{"name":"风絮","tier":"Ⅲ","tierNum":3,"covs":["炎","聚合"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【聚合】层数+2（每回合至多叠加16层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【聚合】层数+4（每回合至多叠加32层）"},{"name":"极光","tier":"Ⅲ","tierNum":3,"covs":["谢拉格"],"traitType":"单次叠加","trait1":"<获得时> 【谢拉格】层数+1（每次触发后升级，至多叠加12层）","trait2":""},{"name":"耶拉","tier":"Ⅲ","tierNum":3,"covs":["谢拉格","奇迹"],"traitType":"整备能力","trait1":"<获得时>获得一件“谢拉格不融冰”","trait2":"<获得时>获得两件“谢拉格不融冰”"},{"name":"初雪","tier":"Ⅲ","tierNum":3,"covs":["谢拉格","协防干员"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人进入冻结使已激活的【谢拉格】层数+1（每回合至多叠加16层）","trait2":"<战斗中>攻击范围内每有一名敌人进入冻结使已激活的【谢拉格】层数+2（每回合至多叠加32层）"},{"name":"深巡","tier":"Ⅲ","tierNum":3,"covs":["阿戈尔","坚守"],"traitType":"作战能力","trait1":"<战斗中>部署时【阿戈尔】盟约每叠加20层，使自身及周围四格的干员攻击速度+1，持续30秒","trait2":"<战斗中>部署时【阿戈尔】盟约每叠加10层，使自身及周围四格的干员攻击速度+1，持续30秒"},{"name":"斯卡蒂","tier":"Ⅲ","tierNum":3,"covs":["阿戈尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【阿戈尔】层数+4（每场战斗至多叠加8层）","trait2":"<战斗中>部署时使已激活的【阿戈尔】层数+8（每场战斗至多叠加16层）"},{"name":"瑕光","tier":"Ⅲ","tierNum":3,"covs":["卡西米尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使自身已激活的盟约层数+3（每场战斗至多叠加9层）","trait2":"<战斗中>部署时使自身已激活的盟约层数+6（每场战斗至多叠加18层）"},{"name":"忍冬","tier":"Ⅲ","tierNum":3,"covs":["叙拉古","迅捷"],"traitType":"整备能力","trait1":"<获得时> 获得1次免费刷新（触发2次后升级，至多获得3次免费刷新）","trait2":""},{"name":"伺夜","tier":"Ⅲ","tierNum":3,"covs":["叙拉古","精准"],"traitType":"持续叠加","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）；；每击倒一名敌人使已激活的【叙拉古】【精准】层数+2（每回合至多叠加8层）","trait2":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）；；每击倒一名敌人使已激活的【叙拉古】【精准】层数+4（每回合至多叠加16层）"},{"name":"水灯心","tier":"Ⅲ","tierNum":3,"covs":["维多利亚","独行","灵巧"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"空弦","tier":"Ⅲ","tierNum":3,"covs":["精准","远见"],"traitType":"持续叠加","trait1":"<进入休整期时>使自身及身前一格干员已激活的盟约层数+3","trait2":"<进入休整期时>使自身及身前一格干员已激活的盟约层数+6"},{"name":"吉星","tier":"Ⅲ","tierNum":3,"covs":["奇迹"],"traitType":"整备能力","trait1":"<售出时>进行一次I阶干员的免费特殊招募；本干员合成为精锐状态后，上述特殊招募变为V阶干员","trait2":"<售出时>进行一次V阶干员的免费特殊招募"},{"name":"伊桑","tier":"Ⅲ","tierNum":3,"covs":["奥术","突袭"],"traitType":"整备能力","trait1":"<售出时>随机获得一名当前人数最多盟约的干员（不高于当前调度中心等级；无法获得自身）","trait2":""},{"name":"罗比菈塔","tier":"Ⅲ","tierNum":3,"covs":["坚守","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>同一行每有1名干员，使已激活的【坚守】【助力】层数+2","trait2":"<休整期结束时>同一行每有1名干员，使已激活的【坚守】【助力】层数+4"},{"name":"乌有","tier":"Ⅲ","tierNum":3,"covs":["炎"],"traitType":"整备能力","trait1":"<获得时>获得一枚“盟约之币”","trait2":"<获得时>获得两枚“盟约之币”"},{"name":"历阵锐枪芬","tier":"Ⅲ","tierNum":3,"covs":["卡西米尔","远见"],"traitType":"作战能力","trait1":"<战斗中>被击倒时召唤整备区的一名【卡西米尔】干员（优先选择最右侧）上场，并使整备区干员的当前再部署时间-30%","trait2":"<战斗中>被击倒时召唤整备区的一名【卡西米尔】干员（优先选择最右侧）上场，并使整备区干员的当前再部署时间-60%"},{"name":"凯瑟琳","tier":"Ⅲ","tierNum":3,"covs":["维多利亚","远见"],"traitType":"整备能力","trait1":"<获得时>获得一件维式重锤，小概率获得特殊维式重锤","trait2":"<获得时>获得一件特殊维式重锤，小概率获得终极维式重锤"},{"name":"盟约·辅助干员","tier":"Ⅲ","tierNum":3,"covs":["调和"],"traitType":"作战能力","trait1":"<战斗中>攻击力和生命上限+20%","trait2":"<战斗中>攻击力和生命上限+40%"},{"name":"风丸","tier":"Ⅲ","tierNum":3,"covs":["不屈"],"traitType":"持续叠加","trait1":"<战斗中>自身被击倒或与傀儡发生替换时使已激活的【不屈】层数+2（每回合至多叠加10层）","trait2":"<战斗中>自身被击倒或与傀儡发生替换时使已激活的【不屈】层数+4（每回合至多叠加20层）"},{"name":"至简","tier":"Ⅲ","tierNum":3,"covs":["萨尔贡"],"traitType":"整备能力","trait1":"购买价格为1","trait2":""},{"name":"奥尔佳","tier":"Ⅲ","tierNum":3,"covs":["乌萨斯","灵巧"],"traitType":"整备能力","trait1":"<获得时>获得一件乌萨斯呼吸器","trait2":"<获得时>获得两件乌萨斯呼吸器"},{"name":"青枳","tier":"Ⅲ","tierNum":3,"covs":["坚守","迅捷"],"traitType":"持续叠加","trait1":"<进入休整期时>使自身及身后一格干员已激活的盟约层数+3","trait2":"<进入休整期时>使自身及身后一格干员已激活的盟约层数+6"},{"name":"黑键","tier":"Ⅳ","tierNum":4,"covs":["莱塔尼亚","精准"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【精准】层数+1（每回合至多叠加8层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【精准】层数+2（每回合至多叠加16层）"},{"name":"艾雅法拉","tier":"Ⅳ","tierNum":4,"covs":["莱塔尼亚","奥术"],"traitType":"作战能力","trait1":"<战斗中>【莱塔尼亚】【奥术】每叠加2层，本干员技力自然回复速度+0.02/秒，攻击力+1%","trait2":"<战斗中>【莱塔尼亚】【奥术】每叠加1层，本干员技力自然回复速度+0.02/秒，攻击力+1%"},{"name":"赫拉格","tier":"Ⅳ","tierNum":4,"covs":["乌萨斯","突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【乌萨斯】【突袭】层数+4（每场战斗至多叠加12层）","trait2":"<战斗中>部署时使已激活的【乌萨斯】【突袭】层数+8（每场战斗至多叠加24层）"},{"name":"维伊","tier":"Ⅳ","tierNum":4,"covs":["乌萨斯","奥术"],"traitType":"作战能力","trait1":"<战斗中>【乌萨斯】每叠加2层，本干员攻击速度+1","trait2":"<战斗中>【乌萨斯】每叠加1层，本干员攻击速度+1"},{"name":"温蒂","tier":"Ⅳ","tierNum":4,"covs":["伊比利亚","坚守"],"traitType":"整备能力","trait1":"售出价格为3","trait2":"售出价格为6"},{"name":"流明","tier":"Ⅳ","tierNum":4,"covs":["伊比利亚","聚合"],"traitType":"持续叠加","trait1":"<战斗结束时>每有一名存活的我方干员，使已激活的【伊比利亚】【聚合】层数+1","trait2":"<战斗结束时>每有一名存活的我方干员，使已激活的【伊比利亚】【聚合】层数+2"},{"name":"余","tier":"Ⅳ","tierNum":4,"covs":["炎","坚守"],"traitType":"持续叠加","trait1":"<战斗中>周围八格每有一名敌人触发元素损伤爆发使自身已激活的盟约层数+1（每回合至多叠加8层）","trait2":"<战斗中>周围八格每有一名敌人触发元素损伤爆发使自身已激活的盟约层数+2（每回合至多叠加16层）"},{"name":"森蚺","tier":"Ⅳ","tierNum":4,"covs":["萨尔贡","不屈"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【萨尔贡】【不屈】盟约层数+4（每回合至多叠加12层）","trait2":"<战斗中>部署时使已激活的【萨尔贡】【不屈】盟约层数+8（每回合至多叠加24层）"},{"name":"灵知","tier":"Ⅳ","tierNum":4,"covs":["谢拉格","迅捷"],"traitType":"整备能力","trait1":"<获得时>获得一次特殊刷新，下次刷新至少出现一名谢拉格干员","trait2":"<获得时>获得一次特殊刷新，下次刷新至少出现两名谢拉格干员"},{"name":"归溟幽灵鲨","tier":"Ⅳ","tierNum":4,"covs":["阿戈尔","不屈"],"traitType":"作战能力","trait1":"<战斗中>自身被击倒或与替身发生替换时使周围八格的【阿戈尔】干员回复5点技力","trait2":"<战斗中>自身被击倒或与替身发生替换时使周围八格的【阿戈尔】干员回复10点技力"},{"name":"水月","tier":"Ⅳ","tierNum":4,"covs":["阿戈尔","灵巧"],"traitType":"作战能力","trait1":"<战斗中>【阿戈尔】盟约每叠加20层，自身及周围四格干员每次造成伤害时使目标移动速度-1%，持续3秒","trait2":"<战斗中>【阿戈尔】盟约每叠加10层，自身及周围四格干员每次造成伤害时使目标移动速度-1%，持续3秒"},{"name":"远牙","tier":"Ⅳ","tierNum":4,"covs":["卡西米尔","精准"],"traitType":"作战能力","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使攻击范围内及整备区中的干员再部署时间-3秒","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使攻击范围内及整备区中的干员再部署时间-6秒"},{"name":"玛恩纳","tier":"Ⅳ","tierNum":4,"covs":["卡西米尔"],"traitType":"作战能力","trait1":"<战斗中>【卡西米尔】每叠加5层，本干员部署后100秒内基础攻击力+10、基础生命上限+50","trait2":"<战斗中>【卡西米尔】每叠加5层，本干员部署后100秒内基础攻击力+20、基础生命上限+100"},{"name":"涤火杰西卡","tier":"Ⅳ","tierNum":4,"covs":["维多利亚","坚守"],"traitType":"持续叠加","trait1":"<休整期结束时>场上每有一名携带装备的干员，使已激活的【维多利亚】【坚守】层数+2","trait2":"<休整期结束时>场上每有一名携带装备的干员，使已激活的【维多利亚】【坚守】层数+4"},{"name":"白铁","tier":"Ⅳ","tierNum":4,"covs":["维多利亚","助力"],"traitType":"整备能力","trait1":"<进入休整期时>使自身携带的装备变为精锐版本","trait2":""},{"name":"斥罪","tier":"Ⅳ","tierNum":4,"covs":["叙拉古","不屈"],"traitType":"作战能力","trait1":"<战斗中>【叙拉古】【不屈】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【叙拉古】【不屈】每叠加3层，本干员攻击力+2%"},{"name":"W","tier":"Ⅳ","tierNum":4,"covs":["迅捷"],"traitType":"作战能力","trait1":"<战斗中>【迅捷】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【迅捷】每叠加3层，本干员攻击力+2%"},{"name":"霍尔海雅","tier":"Ⅳ","tierNum":4,"covs":["奥术","精准"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使自身已激活的盟约层数+4（每场战斗至多叠加12层）","trait2":"<战斗中>每次开启技能时使自身已激活的盟约层数+8（每场战斗至多叠加24层）"},{"name":"山","tier":"Ⅳ","tierNum":4,"covs":["投资人"],"traitType":"作战能力","trait1":"<战斗中>造成的伤害变为弱点伤害（根据敌人的防御力与法术抗性变换伤害类型）","trait2":""},{"name":"淬羽赫默","tier":"Ⅳ","tierNum":4,"covs":["助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使整备区每名干员已激活的盟约层数+1","trait2":"<休整期结束时>使整备区每名干员已激活的盟约层数+2"},{"name":"赫德雷","tier":"Ⅳ","tierNum":4,"covs":["突袭"],"traitType":"持续叠加","trait1":"<战斗中>部署时使已激活的【突袭】层数+4（每回合至多叠加16层）","trait2":"<战斗中>部署时使已激活的【突袭】层数+8（每回合至多叠加32层）"},{"name":"夜莺","tier":"Ⅳ","tierNum":4,"covs":["聚合","协防干员"],"traitType":"持续叠加","trait1":"<战斗结束时>每有一名存活的我方干员，使自身已激活的盟约层数+1","trait2":"<战斗结束时>每有一名存活的我方干员，使自身已激活的盟约层数+2"},{"name":"仇白","tier":"Ⅳ","tierNum":4,"covs":["炎","灵巧"],"traitType":"单次叠加","trait1":"<获得时>【炎】【灵巧】层数+6","trait2":"<获得时>【炎】【灵巧】层数+12"},{"name":"异客","tier":"Ⅳ","tierNum":4,"covs":["萨尔贡","奥术"],"traitType":"整备能力","trait1":"<进入休整期时>获得1件“盟约之币”或“萨尔贡浓茶”，有小概率发现“拟态物质”","trait2":"<进入休整期时>获得2件“盟约之币”或“萨尔贡浓茶”，有小概率发现“拟态物质”"},{"name":"安洁莉娜","tier":"Ⅳ","tierNum":4,"covs":["叙拉古","奇迹"],"traitType":"持续叠加","trait1":"<休整期结束时>本回合每进行过1次刷新，使已激活的【叙拉古】层数+2（每回合至多叠加8层），【奇迹】层数+1（每回合至多叠加4层）","trait2":"<休整期结束时>本回合每进行过1次刷新，使已激活的【叙拉古】层数+4（每回合至多叠加16层），【奇迹】层数+2（每回合至多叠加8层）"},{"name":"华法琳","tier":"Ⅳ","tierNum":4,"covs":["灵巧","聚合"],"traitType":"持续叠加","trait1":"<战斗开始时>使身前一格干员获得特质“<开启技能时>使自身已激活的盟约层数+1（每回合至多叠加7层）”","trait2":"<战斗开始时>使身前一格干员获得特质“<开启技能时>使自身已激活的盟约层数+2（每回合至多叠加14层）”"},{"name":"寒檀","tier":"Ⅳ","tierNum":4,"covs":["远见"],"traitType":"持续叠加","trait1":"<休整期结束时><休整期开始时>使已激活的【远见】层数+3","trait2":"<休整期结束时><休整期开始时>使已激活的【远见】层数+6"},{"name":"纯烬艾雅法拉","tier":"Ⅴ","tierNum":5,"covs":["聚合","莱塔尼亚","远见"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【聚合】层数+2（每场战斗至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【莱塔尼亚】【聚合】层数+4（每场战斗至多叠加40层）"},{"name":"怒潮凛冬","tier":"Ⅴ","tierNum":5,"covs":["乌萨斯","奇迹"],"traitType":"作战能力","trait1":"<战斗中>【乌萨斯】【奇迹】每叠加10层，本干员技力自然回复速度+0.1/秒，攻击力+1%","trait2":"<战斗中>【乌萨斯】【奇迹】每叠加10层，本干员技力自然回复速度+0.2/秒，攻击力+2%"},{"name":"艾丽妮","tier":"Ⅴ","tierNum":5,"covs":["伊比利亚"],"traitType":"作战能力","trait1":"<战斗中>周围12格每有一名敌人被击倒自身回复3点技力","trait2":"<战斗中>周围12格每有一名敌人被击倒自身回复6点技力"},{"name":"棘刺","tier":"Ⅴ","tierNum":5,"covs":["伊比利亚","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】叠加等同于场上所有干员售出价格的层数（每回合至多叠加12层）","trait2":"<休整期结束时>使已激活的【伊比利亚】叠加等同于场上所有干员售出价格2倍的层数（每回合至多叠加24层）"},{"name":"黍","tier":"Ⅴ","tierNum":5,"covs":["炎","远见"],"traitType":"单次叠加","trait1":"<获得时>【炎】层数+8，【远见】层数+4","trait2":"<获得时>【炎】层数+16，【远见】层数+8"},{"name":"佩佩","tier":"Ⅴ","tierNum":5,"covs":["萨尔贡","灵巧"],"traitType":"持续叠加","trait1":"<战斗中>周围八格每有一名敌人或干员进入沉睡或眩晕时使自身及身后一格干员已激活的盟约层数+1（每回合至多叠加9层）","trait2":"<战斗中>周围八格每有一名敌人或干员进入沉睡或眩晕时使自身及身后一格干员已激活的盟约层数+2（每回合至多叠加18层）"},{"name":"圣聆初雪","tier":"Ⅴ","tierNum":5,"covs":["谢拉格","奥术"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人陷入冻结自身回复1点技力，并使已激活的【谢拉格】层数+1（每回合至多叠加24层）","trait2":"<战斗中>攻击范围内每有一名敌人冻结自身回复2点技力，并使已激活的【谢拉格】层数+2（每回合至多叠加48层）"},{"name":"凛御银灰","tier":"Ⅴ","tierNum":5,"covs":["谢拉格","灵巧","投资人"],"traitType":"持续叠加","trait1":"<战斗中>身前一格【谢拉格】【灵巧】干员每场战斗的叠层上限+75%","trait2":"<战斗中>身前一格【谢拉格】【灵巧】干员每场战斗的叠层上限+150%"},{"name":"歌蕾蒂娅","tier":"Ⅴ","tierNum":5,"covs":["阿戈尔"],"traitType":"整备能力","trait1":"<进入休整期时>若同一行有3名干员，获得1个幽灵鲨、安哲拉、深巡或斯卡蒂","trait2":"<进入休整期时>获得1个幽灵鲨、安哲拉、深巡或斯卡蒂"},{"name":"乌尔比安","tier":"Ⅴ","tierNum":5,"covs":["阿戈尔"],"traitType":"作战能力","trait1":"<战斗中>部署时【阿戈尔】盟约每叠加20层，使自身及周围四格的干员攻击力+1%，持续30秒","trait2":"<战斗中>部署时【阿戈尔】盟约每叠加10层，使自身及周围四格的干员攻击力+1%，持续30秒"},{"name":"薇薇安娜","tier":"Ⅴ","tierNum":5,"covs":["莱塔尼亚","卡西米尔","奥术"],"traitType":"持续叠加","trait1":"<战斗中>场上其他与自身拥有相同盟约的干员在本回合战斗期的叠层上限+7","trait2":"<战斗中>场上其他与自身拥有相同盟约的干员在本回合战斗期的叠层上限+14"},{"name":"铃兰","tier":"Ⅴ","tierNum":5,"covs":["叙拉古"],"traitType":"特异化","trait1":"<进入休整期时>触发身前一格的其他干员的“获得时”类效果","trait2":"<进入休整期时>触发身前两格的其他干员的“获得时”类效果"},{"name":"贝洛内","tier":"Ⅴ","tierNum":5,"covs":["叙拉古","突袭"],"traitType":"作战能力","trait1":"<战斗中>【叙拉古】【突袭】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【叙拉古】【突袭】每叠加3层，本干员攻击力+2%"},{"name":"维娜·维多利亚","tier":"Ⅴ","tierNum":5,"covs":["维多利亚","奇迹"],"traitType":"持续叠加","trait1":"<休整期结束时>场上每有一名不同阶的【维多利亚】干员，使已激活的【维多利亚】【奇迹】层数+2","trait2":"<休整期结束时>场上每有一名不同阶的【维多利亚】干员，使已激活的【维多利亚】【奇迹】层数+4"},{"name":"迷迭香","tier":"Ⅴ","tierNum":5,"covs":["精准","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【精准】【助力】层数+10","trait2":"<休整期结束时>使已激活的【精准】【助力】层数+20"},{"name":"隐德来希","tier":"Ⅴ","tierNum":5,"covs":["灵巧","不屈"],"traitType":"作战能力","trait1":"<战斗中>【灵巧】【不屈】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【灵巧】【不屈】每叠加3层，本干员攻击力+2%"},{"name":"塞雷娅","tier":"Ⅴ","tierNum":5,"covs":["坚守","协防干员"],"traitType":"特异化","trait1":"身前一格干员若为“休整期结束时”特质，本干员的特质与其相同","trait2":""},{"name":"溯光星源","tier":"Ⅴ","tierNum":5,"covs":["奥术"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每消耗3资金，使已激活的【奥术】层数+2（每回合至多叠加18层）","trait2":"<休整期结束时> 本回合每消耗3资金，使已激活的【奥术】层数+4（每回合至多叠加36层）"},{"name":"老鲤","tier":"Ⅴ","tierNum":5,"covs":["投资人","炎"],"traitType":"作战能力","trait1":"<战斗中>【炎】【投资人】每叠加3层，本干员攻击力+1%","trait2":"<战斗中>【炎】【投资人】每叠加3层，本干员攻击力+2%"},{"name":"Mon3tr","tier":"Ⅴ","tierNum":5,"covs":["协防干员"],"traitType":"持续叠加","trait1":"<战斗中>周围八格干员每场战斗的叠层上限+30%","trait2":"<战斗中>周围八格干员每场战斗的叠层上限+60%"},{"name":"可露希尔","tier":"Ⅴ","tierNum":5,"covs":["投资人"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【投资人】层数+2（每回合至多叠加16层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【投资人】层数+4（每回合至多叠加32层）"},{"name":"“暴躁铁皮”","tier":"Ⅴ","tierNum":5,"covs":["协防干员"],"traitType":"作战能力","trait1":"<战斗中>攻击力和生命上限+60%","trait2":"<战斗中>攻击力和生命上限+120%"},{"name":"鸿雪","tier":"Ⅴ","tierNum":5,"covs":["萨尔贡","精准"],"traitType":"持续叠加","trait1":"<战斗中>每次开启技能时使已激活的【萨尔贡】【精准】层数+4（每回合至多叠加16层）","trait2":"<战斗中>每次开启技能时使已激活的【萨尔贡】【精准】层数+8（每回合至多叠加32层）"},{"name":"焰尾","tier":"Ⅴ","tierNum":5,"covs":["卡西米尔","迅捷"],"traitType":"持续叠加","trait1":"<休整期结束时>整备区每有一名干员，使已激活的【卡西米尔】【迅捷】层数+1","trait2":"<休整期结束时>整备区每有一名干员，使已激活的【卡西米尔】【迅捷】层数+2"},{"name":"冻河","tier":"Ⅴ","tierNum":5,"covs":["乌萨斯","迅捷"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【乌萨斯】【迅捷】层数+1（每场战斗至多叠加16层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【乌萨斯】【迅捷】层数+2（每场战斗至多叠加32层）"},{"name":"阿米娅","tier":"Ⅴ","tierNum":5,"covs":["奇迹"],"traitType":"持续叠加","trait1":"<战斗中>身前一格干员提升盟约层数时，每次提升的层数额外+1（不受叠层上限影响）","trait2":"<战斗中>身前一格干员提升盟约层数时，每次提升的层数额外+2（不受叠层上限影响）"},{"name":"引星棘刺","tier":"Ⅵ","tierNum":6,"covs":["伊比利亚","迅捷"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的【伊比利亚】【迅捷】层数+12","trait2":"<休整期结束时>使已激活的【伊比利亚】【迅捷】层数+24"},{"name":"烛煌","tier":"Ⅵ","tierNum":6,"covs":["炎","维多利亚","迅捷"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人触发元素损伤爆发使已激活的【炎】【维多利亚】层数+1（每回合至多叠加12层）","trait2":"<战斗中>攻击范围内每有一名敌人触发元素损伤爆发使已激活的【炎】【维多利亚】层数+2（每回合至多叠加24层）"},{"name":"浊心斯卡蒂","tier":"Ⅵ","tierNum":6,"covs":["阿戈尔","聚合"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名我方干员部署使已激活的【阿戈尔】层数+2（每场战斗至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名我方干员部署使已激活的【阿戈尔】层数+4（每场战斗至多叠加40层）"},{"name":"克莱门莎","tier":"Ⅵ","tierNum":6,"covs":["阿戈尔"],"traitType":"作战能力","trait1":"<战斗开始时>【阿戈尔】盟约每叠加20层，使场上所有敌人侵蚀损伤冷却恢复速度+1%","trait2":"<战斗开始时>【阿戈尔】盟约每叠加10层，使场上所有敌人侵蚀损伤冷却恢复速度+1%"},{"name":"耀骑士临光","tier":"Ⅵ","tierNum":6,"covs":["卡西米尔","突袭"],"traitType":"持续叠加","trait1":"<战斗中>被击倒时召唤整备区最右侧的【卡西米尔】【突袭】干员上场，并使自身及被召唤干员已激活的盟约层数+6（每名干员每回合至多叠加12层）","trait2":"<战斗中>被击倒时召唤整备区最右侧的【卡西米尔】【突袭】干员上场，并使自身及被召唤干员已激活的盟约层数+12（每名干员每回合至多叠加24层）"},{"name":"荒芜拉普兰德","tier":"Ⅵ","tierNum":6,"covs":["叙拉古"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人使已激活的【叙拉古】层数+2（每场战斗至多叠加20层）；（晋升为精锐状态时，使所有【叙拉古】干员获得此效果）","trait2":"<战斗中>所有【叙拉古】干员每击倒一名敌人使已激活的【叙拉古】层数+4（每场战斗至多叠加40层）"},{"name":"酒神","tier":"Ⅵ","tierNum":6,"covs":["维多利亚"],"traitType":"整备能力","trait1":"<进入休整期时>获得一件随机装备（不高于当前调度中心等级）","trait2":"<进入休整期时>获得两件随机装备（不高于当前调度中心等级）"},{"name":"逻各斯","tier":"Ⅵ","tierNum":6,"covs":["奥术","远见"],"traitType":"持续叠加","trait1":"<获得时>【奥术】层数+10，【远见】层数+5；<战斗中>【奥术】【远见】每叠加3层，本干员攻击速度+1","trait2":"<获得时>【奥术】层数+20，【远见】层数+10；<战斗中>【奥术】【远见】每叠加3层，本干员攻击速度+2"},{"name":"真言","tier":"Ⅵ","tierNum":6,"covs":["萨尔贡"],"traitType":"作战能力","trait1":"<战斗中>【萨尔贡】每叠加5层，本干员攻击力+1%","trait2":"<战斗中>【萨尔贡】每叠加5层，本干员攻击力+2%"},{"name":"妮芙","tier":"Ⅵ","tierNum":6,"covs":["迅捷","远见"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人陷入恐惧使已激活的【迅捷】层数+4（每回合至多叠加20层）","trait2":"<战斗中>攻击范围内每有一名敌人陷入恐惧使已激活的【迅捷】层数+8（每回合至多叠加40层）"},{"name":"遥","tier":"Ⅵ","tierNum":6,"covs":["聚合","奇迹"],"traitType":"持续叠加","trait1":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【聚合】【奇迹】层数+1（每回合至多叠加12层）","trait2":"<战斗中>攻击范围内每有一名敌人被击倒使已激活的【聚合】【奇迹】层数+2（每回合至多叠加24层）"},{"name":"魔王","tier":"Ⅵ","tierNum":6,"covs":["调和"],"traitType":"持续叠加","trait1":"<休整期结束时>使已激活的核心盟约层数+10","trait2":"<休整期结束时>使已激活的核心盟约层数+20"},{"name":"史尔特尔","tier":"Ⅵ","tierNum":6,"covs":["突袭","不屈"],"traitType":"持续叠加","trait1":"<战斗中>每击倒一名敌人使已激活的【突袭】【不屈】层数+4（每回合至多叠加16层）","trait2":"<战斗中>每击倒一名敌人使已激活的【突袭】【不屈】层数+8（每回合至多叠加32层）"},{"name":"锏","tier":"Ⅵ","tierNum":6,"covs":["卡西米尔","谢拉格","莱塔尼亚"],"traitType":"作战能力","trait1":"<战斗中>【卡西米尔】【谢拉格】【莱塔尼亚】每叠加6层，本干员技力自然回复速度+0.01/秒，生命上限+1%","trait2":"<战斗中>【卡西米尔】【谢拉格】【莱塔尼亚】每叠加3层，本干员技力自然回复速度+0.01/秒，生命上限+1%"},{"name":"机械师","tier":"Ⅵ","tierNum":6,"covs":["协防干员","坚守"],"traitType":"整备能力","trait1":"<进入休整期时>若同一行至少有三名干员，获得一名当前人数最多盟约的干员","trait2":"<进入休整期时>获得一名当前人数最多盟约的干员"},{"name":"塔露拉","tier":"Ⅵ","tierNum":6,"covs":["乌萨斯","奥术","协防干员"],"traitType":"持续叠加","trait1":"<战斗中>【乌萨斯】盟约获得强化：击倒单位时叠加的临时层数提升至4层；在场6名不同【乌萨斯】干员时，提升至6层","trait2":"<战斗中>【乌萨斯】盟约获得强化：击倒单位时叠加的临时层数提升至6层；在场6名不同【乌萨斯】干员时，提升至8层"},{"name":"夕","tier":"Ⅵ","tierNum":6,"covs":["炎","奥术"],"traitType":"持续叠加","trait1":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【奥术】层数+2（每回合至多叠加24层）","trait2":"<休整期结束时> 本回合每获得过一名干员，使已激活的【炎】【奥术】层数+4（每回合至多叠加48层）"},{"name":"蕾缪安","tier":"Ⅵ","tierNum":6,"covs":["精准"],"traitType":"作战能力","trait1":"<战斗中>【精准】每叠加4层，本干员技力自然回复速度+0.01/秒","trait2":"<战斗中>【精准】每叠加2层，本干员技力自然回复速度+0.01/秒"},{"name":"缪尔赛思","tier":"Ⅵ","tierNum":6,"covs":["协防干员"],"traitType":"整备能力","trait1":"<获得时>获得一个“变形同构体”","trait2":"<获得时>获得两个“变形同构体”"},{"name":"帕拉斯","tier":"Ⅵ","tierNum":6,"covs":["灵巧","助力"],"traitType":"持续叠加","trait1":"<休整期结束时>使自身以及身前一格干员已激活的盟约层数+9","trait2":"<休整期结束时>使自身以及身前一格干员已激活的盟约层数+18"}],"avatars":{},"icons":{},"art":{"avatarIds":{"折桠":"char_4207_branch","艾丝黛尔":"char_127_estell","幽灵鲨":"char_143_ghost","野鬃":"char_496_wildmn","慕斯":"char_185_frncat","角峰":"char_199_yak","灰喉":"char_367_swllow","深靛":"char_469_indigo","卡达":"char_328_cammou","摆渡人":"char_4166_varkis","夏栎":"char_492_quercu","杰克":"char_347_jaksel","霜叶":"char_193_frostl","拜松":"char_325_bison","褐果":"char_4041_chnut","烈夏":"char_194_leto","陨星":"char_219_meteo","拉普兰德":"char_140_whitew","地灵":"char_183_skgoat","折光":"char_499_kaitou","蓝毒":"char_129_bluep","泡泡":"char_381_bubble","莎草":"char_4139_papyrs","雪猎":"char_4211_snhunt","砾":"char_237_gravel","复奏":"char_4031_liesel","奥斯塔":"char_346_aosta","Miss.Christine":"char_4198_christ","哈洛德":"char_4114_harold","云迹":"char_4165_ctrail","蛇屠箱":"char_150_snakek","波登可":"char_258_podego","承曦格雷伊":"char_1027_greyy2","锡人":"char_4151_tinman","宴":"char_337_utage","渡桥":"char_4147_mitm","矩":"char_4221_ju","星极":"char_274_astesi","瑰盐":"char_4163_rosesa","真理":"char_195_glassb","铸铁":"char_333_sidero","星源":"char_135_halo","安哲拉":"char_218_cuttle","车尔尼":"char_4047_pianst","卡涅利安":"char_426_billro","乌啾":"char_4224_turdus","海沫":"char_4066_highmo","旅骨":"char_4232_hbound","风絮":"char_4222_taraxa","极光":"char_422_aurora","耶拉":"char_4013_kjera","初雪":"char_174_slbell","深巡":"char_4137_udflow","斯卡蒂":"char_263_skadi","瑕光":"char_423_blemsh","忍冬":"char_4026_vulpis","伺夜":"char_427_vigil","水灯心":"char_4177_brigid","空弦":"char_332_archet","吉星":"char_4203_kichi","伊桑":"char_355_ethan","罗比菈塔":"char_484_robrta","乌有":"char_455_nothin","历阵锐枪芬":"char_1036_fang2","凯瑟琳":"char_4162_cathy","盟约·辅助干员":"char_616_pithst","风丸":"char_4016_kazema","至简":"char_4054_malist","奥尔佳":"char_4245_alga","青枳":"char_488_buildr","黑键":"char_4046_ebnhlz","艾雅法拉":"char_180_amgoat","赫拉格":"char_188_helage","维伊":"char_4226_veen","温蒂":"char_400_weedy","流明":"char_4042_lumen","余":"char_2026_yu","森蚺":"char_416_zumama","灵知":"char_206_gnosis","归溟幽灵鲨":"char_1023_ghost2","水月":"char_437_mizuki","远牙":"char_430_fartth","玛恩纳":"char_4064_mlynar","涤火杰西卡":"char_1034_jesca2","白铁":"char_4072_ironmn","斥罪":"char_4065_judge","W":"char_113_cqbw","霍尔海雅":"char_4027_heyak","山":"char_264_f12yin","淬羽赫默":"char_1031_slent2","赫德雷":"char_4088_hodrer","夜莺":"char_179_cgbird","仇白":"char_4082_qiubai","异客":"char_472_pasngr","安洁莉娜":"char_291_aglina","华法琳":"char_171_bldsk","寒檀":"char_341_sntlla","纯烬艾雅法拉":"char_1016_agoat2","怒潮凛冬":"char_1051_headb2","艾丽妮":"char_4009_irene","棘刺":"char_293_thorns","黍":"char_2025_shu","佩佩":"char_4058_pepe","圣聆初雪":"char_1046_sbell2","凛御银灰":"char_1045_svash2","歌蕾蒂娅":"char_474_glady","乌尔比安":"char_4145_ulpia","薇薇安娜":"char_4098_vvana","铃兰":"char_358_lisa","贝洛内":"char_4037_demetr","维娜·维多利亚":"char_1019_siege2","迷迭香":"char_391_rosmon","隐德来希":"char_4010_etlchi","塞雷娅":"char_202_demkni","溯光星源":"char_1047_halo2","老鲤":"char_322_lmlee","Mon3tr":"char_4179_monstr","可露希尔":"char_4228_closur","“暴躁铁皮”":"char_618_acrbot","鸿雪":"char_4055_bgsnow","焰尾":"char_420_flamtl","冻河":"char_4244_tocka","阿米娅":"char_002_amiya","引星棘刺":"char_1039_thorn2","烛煌":"char_1040_blaze2","浊心斯卡蒂":"char_1012_skadi2","克莱门莎":"char_4231_clemnt","耀骑士临光":"char_1014_nearl2","荒芜拉普兰德":"char_1038_whitw2","酒神":"char_1042_phatm2","逻各斯":"char_4133_logos","真言":"char_4204_mantra","妮芙":"char_4146_nymph","遥":"char_4202_haruka","魔王":"char_4134_cetsyr","史尔特尔":"char_350_surtr","锏":"char_4116_blkkgt","机械师":"char_4230_mcnist","塔露拉":"char_4247_oxi","夕":"char_2015_dusk","蕾缪安":"char_4193_lemuen","缪尔赛思":"char_249_mlyss","帕拉斯":"char_485_pallas"},"bases":["https://cdn.jsdelivr.net/gh/yuanyan3060/ArknightsGameResource@main/avatar/","https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/"]}};</script>
 <script>/* 卫戍协议·配队模拟器 — 规则内核（纯函数，浏览器/Node 通用）
  * 术语一律使用官方用语：干员 / 盟约 / 变形同构体。
  * 数据来自 PRTS《卫戍协议·规程/PRTS盟约记录》与 NGA 解包整理。
@@ -452,8 +493,10 @@ footer a{color:#6f8ba3;text-decoration:none}
     var RE_GAIN = /((?:【[^】]+】)+)\s*层数\+(\d+)(?:\s*（每回合至多叠加(\d+)层）)?/g;
     var RE_CONVERT = /转化(\d+)层【([^】]+)】临时层数为固定层数/;
 
+    var RE_GENERIC = /已激活的盟约层数\+(\d+)/g;
+
     function parseTrait(text, op) {
-      var out = { gains: [], convert: null, raw: text || '' };
+      var out = { gains: [], generic: [], convert: null, raw: text || '' };
       if (!text) return out;
       var m;
       RE_GAIN.lastIndex = 0;
@@ -465,6 +508,12 @@ footer a{color:#6f8ba3;text-decoration:none}
           if (!covByName[cov]) return;
           out.gains.push({ cov: cov, amount: n, perRoundCap: cap, oneShot: /获得时|首次/.test(text) });
         });
+      }
+      // 「使（自身及身前一格）已激活的盟约层数+N」：不指定某个盟约，对所有已激活盟约生效
+      var gm;
+      RE_GENERIC.lastIndex = 0;
+      while ((gm = RE_GENERIC.exec(text))) {
+        out.generic.push({ amount: parseInt(gm[1], 10), oneShot: /获得时|首次/.test(text) });
       }
       var c = text.match(RE_CONVERT);
       if (c) out.convert = { amount: parseInt(c[1], 10), cov: c[2] };
@@ -587,6 +636,13 @@ footer a{color:#6f8ba3;text-decoration:none}
         }
       }
 
+      // 通用叠层：不指定盟约、对「所有已激活盟约」生效的层数增速（空弦 / 渡桥等）
+      var stackRate = 0;
+      field.forEach(function (op) {
+        var tr = traitFor(op, !!elite[op.name]);
+        (tr.generic || []).forEach(function (g) { if (!g.oneShot) stackRate += g.amount; });
+      });
+
       var litCount = litList.length;
       var tierCount = 0;
       covenants.forEach(function (c) { tierCount += tiers[c.name].active ? tiers[c.name].level : 0; });
@@ -599,7 +655,7 @@ footer a{color:#6f8ba3;text-decoration:none}
         bench: bench.map(function (o) { return o.name; }),
         counts: counts, tiers: tiers, rates: rates, warnings: warnings,
         lit: litList, litCount: litCount, tierCount: tierCount, totalRate: totalRate,
-        harmony: harmonyActive
+        stackRate: stackRate, harmony: harmonyActive
       };
     }
 
@@ -652,50 +708,161 @@ footer a{color:#6f8ba3;text-decoration:none}
   var api = { makeCore: makeCore };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.Core = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this);
-</script>
-<script>/* 求解器：给定目标盟约档位，求满足条件的最少人数配队（设计一）
+})(typeof globalThis !== 'undefined' ? globalThis : this);</script>
+<script>/* 求解器 —— 两种计算模式
+ *  min    ｜最少人数：满足所选标签的前提下，上场人数最少；同人数按评分排序
+ *  strict ｜严格拉满：队伍固定为场上上限（默认 8 人，人事部档案 9 人），先满足标签，再最大化评分
+ *
+ * 评分 = 盟约权重（主战斗 > 生存 > 辅战斗 > 特殊 > 运营）
+ *      + 阵营盟约项（「多阵营」开启时为正且高于主战斗；关闭时为负，避免多阵营阵容）
+ *      + 棋子等阶（质量） + 每回合叠层 + 远见叠层（可选） − 警告扣分
+ * 选中标签是硬约束：任何方案都必须先满足标签，评分只在满足标签的方案之间比较。
+ *
  * 规则：
- *  - 调和：可选「是否允许魔王入队」；魔王占 1 人，调和让核心盟约 +1（下界与剪枝都计入）
+ *  - 调和：可选「是否允许魔王」；魔王占 1 人，调和让核心盟约 +1（下界与剪枝都计入）
  *  - 独行：至多 1 名独行干员，否则失效
  *  - 绝技：按精锐人数计算，求解时把在场干员全部视为精锐
  *  - 远见 / 奇迹 / 投资人：整备区成员也计入
  *  - 协防干员：被 BAN 阵营的干员作为兜底计入
  *  - 变形同构体：只在某盟约差 1 人时补位，受数量上限约束
- *  - 严格模式：只允许点亮目标盟约，且档位恰好等于目标档位
- * 输出按「人数升序 → 点亮档位降序 → 层数增速降序」排序。
+ *  - 等阶限制：上场干员最高等阶 = 玩家等阶 + 1（上限 Ⅵ）
  */
 (function (global) {
   'use strict';
 
+  // 盟约类别（初始权重顺序：主战斗 > 生存 > 辅战斗 > 特殊 > 运营）
+  var CAT_OF = {
+    '精准': '主战斗', '奥术': '主战斗', '突袭': '主战斗',
+    '坚守': '生存', '不屈': '生存', '聚合': '生存', '协防干员': '生存',
+    '迅捷': '辅战斗', '灵巧': '辅战斗', '助力': '辅战斗',
+    '调和': '特殊', '绝技': '特殊', '独行': '特殊',
+    '远见': '运营', '奇迹': '运营', '投资人': '运营'
+  };
+  var CAT_ORDER = ['主战斗', '生存', '辅战斗', '特殊', '运营'];
+  var DEFAULT_WEIGHTS = {
+    '主战斗': 3, '生存': 2.4, '辅战斗': 1.8, '特殊': 1, '运营': -0.4,
+    factionOn: 4, factionOff: -1.5,
+    factionExtraOn: 0.8, factionExtraOff: -1.2,
+    quality: 0.12, rate: 0.05,
+    visionStack: 1.2, visionRound: 0.5, visionWeak: -0.6,
+    warn: -0.4
+  };
+  var WEIGHT_META = [
+    { key: '主战斗', label: '主战斗', min: 0, max: 6, step: 0.1, desc: '精准 / 奥术 / 突袭：直接提升输出的盟约' },
+    { key: '生存', label: '生存', min: 0, max: 6, step: 0.1, desc: '坚守 / 不屈 / 聚合 / 协防干员' },
+    { key: '辅战斗', label: '辅战斗', min: 0, max: 6, step: 0.1, desc: '迅捷 / 灵巧 / 助力' },
+    { key: '特殊', label: '特殊', min: 0, max: 6, step: 0.1, desc: '调和 / 绝技 / 独行' },
+    { key: '运营', label: '运营', min: -3, max: 3, step: 0.1, desc: '远见 / 奇迹 / 投资人：默认略负，避免为了资金牺牲战斗' },
+    { key: 'factionOn', label: '阵营（多阵营开）', min: 0, max: 8, step: 0.1, desc: '开启「多阵营」时阵营盟约的权重，需高于主战斗' },
+    { key: 'factionOff', label: '阵营（多阵营关）', min: -5, max: 5, step: 0.1, desc: '关闭「多阵营」时为负，让多阵营阵容很少出现' },
+    { key: 'quality', label: '棋子等阶', min: 0, max: 0.6, step: 0.02, desc: '每 1 点总等阶的加分（120 阶 ≈ 14 分）' },
+    { key: 'rate', label: '每回合叠层', min: 0, max: 0.6, step: 0.01, desc: '每回合叠层增速的加分' },
+    { key: 'visionStack', label: '远见叠层', min: 0, max: 6, step: 0.1, desc: '空弦 / 渡桥这类「已激活盟约层数 +N」的加分' }
+  ];
+
+  function num(v, d) { var n = typeof v === 'number' ? v : parseFloat(v); return isFinite(n) ? n : d; }
+  function mergeWeights(w) {
+    var out = {};
+    Object.keys(DEFAULT_WEIGHTS).forEach(function (k) { out[k] = DEFAULT_WEIGHTS[k]; });
+    if (w) Object.keys(w).forEach(function (k) { if (k in out && isFinite(num(w[k], NaN))) out[k] = num(w[k], out[k]); });
+    return out;
+  }
+  function keyOf(names) { return names.slice().sort().join('|'); }
+
+  // 干员的「远见 / 通用叠层」画像：stack = 对所有已激活盟约生效的每回合层数
+  function visionInfo(o) {
+    var tp = o && o.traitParsed && o.traitParsed[1];
+    if (!tp) return { stack: 0, round: 0, oneShot: 0 };
+    var stack = 0, round = 0, oneShot = 0;
+    (tp.generic || []).forEach(function (g) { if (g.oneShot) oneShot += g.amount; else stack += g.amount; });
+    (tp.gains || []).forEach(function (g) {
+      if (g.cov !== '远见') return;
+      if (g.oneShot) oneShot += g.amount; else round += g.amount;
+    });
+    return { stack: stack, round: round, oneShot: oneShot };
+  }
+
+  // 评分：标签不进评分，标签是硬约束；这里只衡量「满足标签之后」的取舍
+  function scoreState(core, st, ops, cfg) {
+    var w = cfg.weights;
+    var multiFaction = !!cfg.multiFaction;
+    var vision = !!cfg.vision;
+    var parts = { cov: 0, faction: 0, quality: 0, rate: 0, vision: 0, warn: 0 };
+    var factions = [];
+    core.covenants.forEach(function (c) {
+      var t = st.tiers[c.name];
+      if (!t || !t.active) return;
+      var lf = 1 + 0.5 * Math.max(0, t.level - 1);
+      if (c.kind === '核心') {
+        factions.push(c.name);
+        parts.faction += (multiFaction ? w.factionOn : w.factionOff) * lf;
+      } else {
+        parts.cov += num(w[CAT_OF[c.name] || '特殊'], 0) * lf;
+      }
+    });
+    if (factions.length > 1) {
+      parts.faction += (factions.length - 1) * (multiFaction ? w.factionExtraOn : w.factionExtraOff);
+    }
+    var tiers = 0;
+    ops.forEach(function (o) { tiers += (o.tierNum || 0); });
+    parts.quality = tiers * w.quality;
+    parts.rate = (st.totalRate || 0) * w.rate;
+    if (vision) {
+      parts.vision += (st.stackRate || 0) * w.visionStack;
+      if (st.rates['远见']) parts.vision += (st.rates['远见'].perRound || 0) * w.visionRound;
+      ops.forEach(function (o) {
+        if (o.covs.indexOf('远见') < 0) return;
+        var vi = visionInfo(o);
+        if (!vi.stack && !vi.round) parts.vision += w.visionWeak; // 只有「获得时 / 仅凑人数」的远见
+      });
+    }
+    parts.warn = (st.warnings ? st.warnings.length : 0) * w.warn;
+    var total = parts.cov + parts.faction + parts.quality + parts.rate + parts.vision + parts.warn;
+    return { score: Math.round(total * 100) / 100, parts: parts, factions: factions };
+  }
+
   function solve(core, opts) {
     opts = opts || {};
     var t0 = Date.now();
-    var budgetMs = opts.budgetMs || 900;
-    var limit = opts.limit || 3000; // 需要足够多的样本才能把「激活盟约多」的方案搜出来
-    var sortMode = opts.sortMode === 'tier' ? 'tier' : 'cov';
-    var maxSize = opts.maxSize || 8;
-    var strict = !!opts.strict;
-    var allowHarmony = opts.harmony !== false; // 是否允许「魔王」这类调和干员入队（占 1 人，调和让核心 +1）
+    var budgetMs = opts.budgetMs || 1200;
+    var limit = opts.limit || 4000;
+    var mode = opts.mode === 'strict' || opts.strict ? 'strict' : 'min';
+    var maxSize = Math.min(9, Math.max(1, Math.floor(opts.maxSize || 8)));
+    var strictSize = mode === 'strict' ? maxSize : 0;
+    var w = mergeWeights(opts.weights);
+    var multiFaction = !!opts.multiFaction;
+    var vision = !!opts.vision;
+    var playerTier = Math.min(6, Math.max(1, Math.floor(num(opts.playerTier, 6))));
+    var maxOpTier = Math.min(6, playerTier + 1);
+    var allowHarmony = opts.harmony !== false;
+    var pivotBudget = Math.max(0, Math.min(3, Math.floor(num(opts.pivotBudget, 0))));
 
     var bans = Object.create(null);
     (opts.bans || []).forEach(function (n) { bans[n] = 1; });
     if (!allowHarmony) bans['调和'] = 1; // 不允许魔王：调和干员不进候选，调和也不生效
     var exclude = Object.create(null);
     (opts.exclude || []).forEach(function (n) { exclude[n] = 1; });
-    var locked = (opts.locked || []).filter(function (n) { return core.opByName[n]; });
-    var lockedSet = Object.create(null);
-    locked.forEach(function (n) { lockedSet[n] = 1; });
-    var pivotBudget = Math.max(0, opts.pivotBudget || 0);
+
+    // 场上保留的干员：这里收到的是名字，先转成干员对象（历史 bug：混用名字与对象导致求解抛错）
+    var lockedOps = [], lockedSet = Object.create(null), lockedNames = [];
+    (opts.locked || []).forEach(function (n) {
+      var o = core.opByName[n];
+      if (!o || lockedSet[n]) return;
+      lockedSet[n] = 1; lockedOps.push(o); lockedNames.push(n);
+    });
     var userElite = (opts.elite || []).filter(function (n) { return core.opByName[n]; });
-    var bench = (opts.bench || []).filter(function (n) { return core.opByName[n]; });
+    var bench = [];
+    (opts.bench || []).forEach(function (n) { if (core.opByName[n] && bench.indexOf(n) < 0) bench.push(n); });
 
     var targets = (opts.targets || []).filter(function (t) { return t && t.at > 0 && core.covByName[t.cov]; });
-    if (!targets.length) return { solutions: [], note: '未选择目标盟约', elapsed: 0 };
-
+    // 没有标签但勾选了「保留场上已有干员」：把保留的干员直接交给求解器（严格模式按评分补满）
+    var freeMode = !targets.length;
+    var baseRet = { solutions: [], mode: mode, strictSize: strictSize, maxTier: maxOpTier, weights: w, elapsed: 0 };
+    if (freeMode && !lockedOps.length) { baseRet.note = '未选择目标盟约'; return baseRet; }
     var bannedTargets = targets.filter(function (t) { return bans[t.cov]; });
     if (bannedTargets.length) {
-      return { solutions: [], note: '目标中包含已禁用盟约：' + bannedTargets.map(function (t) { return t.cov; }).join('、'), elapsed: 0 };
+      baseRet.note = '目标中包含已禁用的盟约：' + bannedTargets.map(function (t) { return t.cov; }).join('、');
+      return baseRet;
     }
 
     var need = Object.create(null);
@@ -704,12 +871,11 @@ footer a{color:#6f8ba3;text-decoration:none}
     var eliteTarget = needList.some(function (t) { return t.c.countRule === 'elite'; });
     var soloTarget = !!need['独行'];
     var hasCoreTarget = needList.some(function (t) { return t.c.kind === '核心'; });
+    var fallbackTarget = !!need['协防干员'];
 
-    function hasSolo(o) { return o.covs.indexOf('独行') >= 0; }
-    function isHarmony(o) { return o.covs.indexOf('调和') >= 0; }
-
-    var lockedHarmony = locked.some(function (n) { return isHarmony(core.opByName[n]); });
-    var lockedSolo = locked.some(function (n) { return hasSolo(core.opByName[n]); });
+    function hasSolo(o) { return !!o && o.covs.indexOf('独行') >= 0; }
+    function isHarmony(o) { return !!o && o.covs.indexOf('调和') >= 0; }
+    var lockedSolo = lockedOps.some(hasSolo);
 
     // 整备区对「远见 / 奇迹 / 投资人」的固定贡献（同名只算一次）
     var benchAdd = Object.create(null);
@@ -724,30 +890,121 @@ footer a{color:#6f8ba3;text-decoration:none}
       benchAdd[c.name] = n;
     });
 
-    function targetLevel(c, at) { var lv = 0; c.tiers.forEach(function (x) { if (x.at <= at) lv++; }); return lv; }
-
-    // 候选池：覆盖目标盟约的干员 + 允许时的调和干员（魔王）+ 被 BAN 阵营的兜底干员
-    var pool = core.operators.filter(function (o) {
+    /* ---------- 候选池 ---------- */
+    function tierOK(o) { return (o.tierNum || 1) <= maxOpTier; }
+    function baseOK(o) {
       if (o.name === '盟约·辅助干员') return false; // 策略赠送单位，不参与配队
       if (exclude[o.name] || lockedSet[o.name]) return false;
-      if (o.covs.some(function (c) { return need[c]; })) return true;
+      if (!tierOK(o)) return false;
+      return true;
+    }
+    function coversTarget(o) { return o.covs.some(function (c) { return need[c]; }); }
+
+    var coverPool = core.operators.filter(function (o) {
+      if (!baseOK(o)) return false;
+      if (coversTarget(o)) return true;
       if (allowHarmony && hasCoreTarget && isHarmony(o)) return true;
-      if (need['协防干员'] && o.covs.some(function (c) { return bans[c]; })) return true;
+      if (fallbackTarget && o.covs.some(function (c) { return bans[c]; })) return true;
       return false;
     }).map(function (o) {
       var cover = o.covs.filter(function (c) { return need[c]; }).length;
       return { op: o, cover: cover };
     });
-    pool.sort(function (a, b) { return b.cover - a.cover || b.op.tierNum - a.op.tierNum; });
-    var P = pool.map(function (x) { return x.op; });
+    coverPool.sort(function (a, b) { return b.cover - a.cover || b.op.tierNum - a.op.tierNum; });
+    var P = coverPool.map(function (x) { return x.op; });
 
-    var solutions = [], seen = Object.create(null), visits = 0, complete = true, stop = false;
+    // 拉满名额时用来补齐的候选（按静态潜力取前 36 个；完整候选池供局部搜索替换）
+    var fillPool = core.operators.filter(baseOK);
+    fillPool.sort(function (a, b) {
+      var pa = (a.tierNum || 1) * 0.5 + a.covs.length;
+      var pb = (b.tierNum || 1) * 0.5 + b.covs.length;
+      return pb - pa || b.tierNum - a.tierNum;
+    });
+    var FP = fillPool.slice(0, 36);
+    var swapPool = [];
+    var swapSeen = Object.create(null);
+    P.concat(FP).forEach(function (o) { if (!swapSeen[o.name]) { swapSeen[o.name] = 1; swapPool.push(o); } });
 
-    // 剪枝：用「最乐观」的有效人数判断名额是否够补齐，全部特殊计数都计入
+    /* ---------- 状态与评分 ---------- */
+    var eliteSet = Object.create(null);
+    userElite.forEach(function (n) { eliteSet[n] = 1; });
+
+    function eliteNamesFor(names) {
+      var out = [];
+      Object.keys(eliteSet).forEach(function (n) { if (names.indexOf(n) >= 0) out.push(n); });
+      if (eliteTarget) names.forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+      return out;
+    }
+    function computeWith(names, pivots) {
+      return core.compute({
+        field: names, bench: bench, elite: eliteNamesFor(names), pivots: pivots || {},
+        bans: opts.bans, extraLayers: opts.extraLayers
+      });
+    }
+
+    // 变形同构体：逐次补「差 1」的缺口
+    function applyPivots(names) {
+      var pivots = Object.create(null);
+      var st = computeWith(names, pivots);
+      var remaining = pivotBudget;
+      while (remaining > 0) {
+        var gap = null;
+        for (var i = 0; i < needList.length; i++) {
+          if ((st.counts[needList[i].cov] || 0) < needList[i].at) { gap = needList[i]; break; }
+        }
+        if (!gap) break;
+        var pick = null;
+        for (var j = 0; j < names.length; j++) {
+          var o = core.opByName[names[j]];
+          if (!o || o.covs.indexOf(gap.cov) >= 0 || pivots[names[j]]) continue;
+          pick = names[j]; break;
+        }
+        if (!pick) break;
+        pivots[pick] = gap.cov;
+        remaining--;
+        st = computeWith(names, pivots);
+      }
+      return { st: st, pivots: pivots };
+    }
+
+    var sctx = { weights: w, multiFaction: multiFaction, vision: vision };
+    function scoreOf(st, ops) { return scoreState(core, st, ops, sctx); }
+
+    var seen = Object.create(null);
+    function finalize(names, allowDup) {
+      if (names.length > maxSize) return null;
+      if (mode === 'strict' && names.length !== strictSize) return null;
+      var key = keyOf(names);
+      if (!allowDup) { if (seen[key]) return null; }
+      var res = applyPivots(names);
+      var st = res.st;
+      for (var i = 0; i < needList.length; i++) {
+        if ((st.counts[needList[i].cov] || 0) < needList[i].at) return null;
+      }
+      if (!allowDup) seen[key] = 1;
+      var ops = names.map(function (n) { return core.opByName[n]; }).filter(Boolean);
+      var sc = scoreOf(st, ops);
+      var targetTiers = 0;
+      needList.forEach(function (t) { targetTiers += st.tiers[t.cov].level; });
+      var totalTier = 0;
+      ops.forEach(function (o) { totalTier += (o.tierNum || 0); });
+      return {
+        team: names.slice(), size: names.length, bench: bench.slice(), elite: eliteNamesFor(names),
+        pivots: res.pivots, tierCount: st.tierCount, extraTiers: st.tierCount - targetTiers,
+        totalTier: totalTier, totalRate: st.totalRate, litCount: st.litCount,
+        score: sc.score, parts: sc.parts, factions: sc.factions, mode: mode,
+        warnings: st.warnings.slice(), state: st
+      };
+    }
+
+    var visits = 0, stop = false;
+    function timeUp() { return Date.now() - t0 > budgetMs; }
+
+    // 剪枝：用「最乐观」的有效人数判断名额是否够补齐
     function prune(chosen, room) {
-      var all = locked.concat(chosen);
+      var all = lockedOps.concat(chosen);
       var raw = Object.create(null), fb = Object.create(null), solo = 0, harm = false;
-      var eliteCount = all.length;                    // 绝技：在场每个人都可以精锐
+      var eliteCount = all.length + room;
       all.forEach(function (o) {
         if (hasSolo(o)) solo++;
         if (isHarmony(o) && !bans['调和']) harm = true;
@@ -765,7 +1022,7 @@ footer a{color:#6f8ba3;text-decoration:none}
           have = Object.keys(set).length;
         }
         if (t.c.countRule === 'elite') {
-          if (eliteCount + room < t.at) return true;
+          if (eliteCount < t.at) return true;
           continue;
         }
         if (t.c.kind === '核心' && harm && (have > 0 || room > 0)) have += 1;
@@ -774,131 +1031,266 @@ footer a{color:#6f8ba3;text-decoration:none}
       return false;
     }
 
-    function evaluate(chosen) {
-      var team = locked.concat(chosen);
-      var names = team.map(function (o) { return o.name; });
-      if (names.length > maxSize) return null;
-
-      // 绝技：把在场干员全部视为精锐（精锐只影响层数增速与绝技计数）
-      var elite = Object.create(null);
-      userElite.forEach(function (n) { elite[n] = 1; });
-      if (eliteTarget) names.forEach(function (n) { elite[n] = 1; });
-
-      // 变形同构体：逐次补「差 1」的缺口，每次重新评估（把调和 / 整备区 / 兜底都算进去）
-      var pivots = Object.create(null);
-      var remainingPivot = pivotBudget;
-      var st = core.compute({ field: names, bench: bench, elite: Object.keys(elite), pivots: pivots, bans: opts.bans, extraLayers: opts.extraLayers });
-      while (remainingPivot > 0) {
-        var gap = null;
-        for (var i = 0; i < needList.length; i++) {
-          if ((st.counts[needList[i].cov] || 0) < needList[i].at) { gap = needList[i]; break; }
-        }
-        if (!gap) break;
-        var pick = null;
-        for (var j = 0; j < team.length; j++) {
-          var o = team[j];
-          if (o.covs.indexOf(gap.cov) >= 0 || pivots[o.name]) continue;
-          pick = o; break;
-        }
-        if (!pick) break;
-        pivots[pick.name] = gap.cov;
-        remainingPivot--;
-        st = core.compute({ field: names, bench: bench, elite: Object.keys(elite), pivots: pivots, bans: opts.bans, extraLayers: opts.extraLayers });
-      }
-
-      var ok = needList.every(function (t) { return (st.counts[t.cov] || 0) >= t.at; });
-      if (!ok) return null;
-
-      // 严格模式：只点亮目标盟约，且档位与目标档位完全一致（不多不少）
-      if (strict) {
-        for (var k = 0; k < core.covenants.length; k++) {
-          var c = core.covenants[k];
-          var got = st.tiers[c.name].active ? st.tiers[c.name].level : 0;
-          var want = need[c.name] ? targetLevel(c, need[c.name]) : 0;
-          if (got !== want) return null;
-        }
-      }
-
-      var key = names.slice().sort().join('|');
-      if (seen[key]) return null;
-      seen[key] = 1;
-
-      var targetTiers = 0;
-      needList.forEach(function (t) { targetTiers += st.tiers[t.cov].level; });
-      var totalTier = 0;
-      team.forEach(function (o) { totalTier += (o.tierNum || 0); });
-      return {
-        team: names, size: names.length, bench: bench.slice(), elite: Object.keys(elite),
-        pivots: pivots, tierCount: st.tierCount, extraTiers: st.tierCount - targetTiers, totalTier: totalTier,
-        totalRate: st.totalRate, litCount: st.litCount, strict: strict,
-        warnings: st.warnings.slice(), state: st
-      };
-    }
-
-    function dfs(chosen, startIdx, k) {
-      if (stop) return;
-      if (++visits % 2048 === 0 && Date.now() - t0 > budgetMs) { complete = false; stop = true; return; }
-      if (chosen.length === k) {
-        var res = evaluate(chosen);
-        if (res) { solutions.push(res); if (solutions.length >= limit) stop = true; }
-        return;
-      }
-      if (prune(chosen, k - chosen.length)) return;
-      for (var i = startIdx; i < P.length && !stop; i++) {
-        var o = P[i];
-        if (soloTarget && hasSolo(o) && (lockedSolo || chosen.some(hasSolo))) continue;
-        chosen.push(o);
-        dfs(chosen, i + 1, k);
-        chosen.pop();
-      }
-    }
-
-    // 下界：调和让核心盟约少 1 人；整备区已提供的名额要扣掉；绝技至少要 at 名在场干员
-    var startK = locked.length;
+    // 下界：整备区已提供的名额要扣掉；兜底类按 0 算
+    var minTotal = lockedOps.length;
     needList.forEach(function (t) {
       var base = t.at;
-
       if (t.c.countRule === 'field+bench') base = Math.max(0, base - (benchAdd[t.cov] || 0));
       if (t.c.countRule === 'fallback') base = 0;
-      startK = Math.max(startK, base);
+      minTotal = Math.max(minTotal, base);
     });
-    if (!startK) startK = 1;
-    if (startK > maxSize) {
-      return { solutions: [], note: '场上上限 ' + maxSize + ' 人，无法放下最少 ' + startK + ' 人的方案', elapsed: Date.now() - t0, searched: P.length };
-    }
-    var topK = Math.min(maxSize, startK + 6);
-    for (var k = startK; k <= topK && !stop; k++) {
-      dfs([], 0, k);
+    if (minTotal < 1) minTotal = 1;
+
+    var solutions = [];
+    var complete = true;
+
+    function pushSolution(sol) {
+      if (!sol) return;
+      solutions.push(sol);
+      if (solutions.length >= limit) stop = true;
     }
 
-    // 排序：人数少 >（激活盟约多 / 总等阶高，可切换）> 每回合叠层多
-    solutions.sort(function (a, b) {
-      if (a.size !== b.size) return a.size - b.size;
-      if (sortMode === 'tier') {
+    function sortSolutions() {
+      solutions.sort(function (a, b) {
+        if (mode === 'min' && a.size !== b.size) return a.size - b.size;
+        if (b.score !== a.score) return b.score - a.score;
         if (b.totalTier !== a.totalTier) return b.totalTier - a.totalTier;
-      } else {
-        if (b.litCount !== a.litCount) return b.litCount - a.litCount;
-        if (b.totalTier !== a.totalTier) return b.totalTier - a.totalTier;
+        if (b.totalRate !== a.totalRate) return b.totalRate - a.totalRate;
+        if (b.tierCount !== a.tierCount) return b.tierCount - a.tierCount;
+        return a.team.join().localeCompare(b.team.join(), 'zh');
+      });
+    }
+
+    /* ---------- 模式一：最少人数 ---------- */
+    function runMin() {
+      var kTop = maxSize - lockedOps.length;
+      if (kTop < 0) {
+        baseRet.note = '场上上限 ' + maxSize + ' 人，但保留的场上干员已有 ' + lockedOps.length + ' 人';
+        return;
       }
-      return b.totalRate - a.totalRate || b.tierCount - a.tierCount || a.team.join().localeCompare(b.team.join(), 'zh');
-    });
+      function dfs(chosen, startIdx, k) {
+        if (stop) return;
+        if (++visits % 512 === 0 && timeUp()) { complete = false; stop = true; return; }
+        if (chosen.length === k) {
+          var names = lockedNames.concat(chosen.map(function (o) { return o.name; }));
+          pushSolution(finalize(names));
+          return;
+        }
+        if (prune(chosen, k - chosen.length)) return;
+        for (var i = startIdx; i < P.length && !stop; i++) {
+          var o = P[i];
+          if (soloTarget && hasSolo(o) && (lockedSolo || chosen.some(hasSolo))) continue;
+          chosen.push(o);
+          dfs(chosen, i + 1, k);
+          chosen.pop();
+        }
+      }
+      for (var total = minTotal; total <= maxSize && !stop; total++) {
+        dfs([], 0, total - lockedOps.length);
+      }
+      if (!solutions.length) {
+        baseRet.note = complete
+          ? '没有满足所选标签的方案：可以放宽「等阶限制」、减少禁用，或降低标签档位'
+          : '已达时间上限，暂未找到满足所选标签的方案：可以放宽条件、减少标签，或稍后重试';
+      }
+    }
 
-    return {
-      solutions: solutions.slice(0, limit),
+    /* ---------- 模式二：严格拉满 ---------- */
+    function runStrict() {
+      if (lockedOps.length > strictSize) {
+        baseRet.note = '固定 ' + strictSize + ' 人，但保留的场上干员已有 ' + lockedOps.length + ' 人';
+        return;
+      }
+      if (minTotal > strictSize) {
+        baseRet.note = '所选标签至少需要 ' + minTotal + ' 人，超过固定队伍上限 ' + strictSize + ' 人';
+        return;
+      }
+      var needAdd = strictSize - lockedOps.length;
+      var seedSeen = Object.create(null), seeds = [];
+
+      function addSeed(names) {
+        var key = keyOf(names);
+        if (seedSeen[key]) return false;
+        seedSeen[key] = 1;
+        seeds.push(names);
+        return true;
+      }
+      function seedDfs(chosen, startIdx, k) {
+        if (seeds.length >= 10 || timeUp()) return;
+        if (chosen.length === k) {
+          var names = lockedNames.concat(chosen.map(function (o) { return o.name; }));
+          var st = computeWith(names, {});
+          for (var i = 0; i < needList.length; i++) {
+            if ((st.counts[needList[i].cov] || 0) < needList[i].at) return;
+          }
+          addSeed(names);
+          return;
+        }
+        if (prune(chosen, k - chosen.length)) return;
+        for (var i = startIdx; i < P.length && seeds.length < 10 && !timeUp(); i++) {
+          var o = P[i];
+          if (soloTarget && hasSolo(o) && (lockedSolo || chosen.some(hasSolo))) continue;
+          chosen.push(o);
+          seedDfs(chosen, i + 1, k);
+          chosen.pop();
+        }
+      }
+      if (freeMode) {
+        seeds.push(lockedNames.slice());
+        seedSeen[keyOf(lockedNames)] = 1;
+      } else {
+        var addLo = Math.max(0, minTotal - lockedOps.length);
+        for (var s = addLo; s <= needAdd && seeds.length < 10 && !timeUp(); s++) seedDfs([], 0, s);
+      }
+
+      if (!seeds.length) {
+        baseRet.note = timeUp()
+          ? '已达时间上限，暂未找到满足所选标签的方案：可以放宽条件或减少标签'
+          : '没有满足所选标签的方案：在「等阶限制 / 禁用 / 保留干员」条件下凑不出这 ' + strictSize + ' 人';
+        return;
+      }
+
+      function teamScore(names, qualityBias) {
+        var ops = names.map(function (n) { return core.opByName[n]; }).filter(Boolean);
+        var sc = scoreOf(computeWith(names, {}), ops);
+        if (qualityBias) {
+          var q = 0;
+          ops.forEach(function (o) { q += (o.tierNum || 0); });
+          sc.score += q * 0.4;
+        }
+        return sc.score;
+      }
+
+      function fillTeam(baseNames, qualityBias) {
+        var team = baseNames.slice();
+        var guard = 0;
+        while (team.length < strictSize && guard++ < 14 && !timeUp()) {
+          var best = null, bestSc = -Infinity;
+          for (var i = 0; i < FP.length; i++) {
+            var o = FP[i];
+            if (team.indexOf(o.name) >= 0) continue;
+            if (soloTarget && hasSolo(o) && team.some(function (n) { return hasSolo(core.opByName[n]); })) continue;
+            var sc = teamScore(team.concat([o.name]), qualityBias);
+            if (sc > bestSc) { bestSc = sc; best = o; }
+          }
+          if (!best) break;
+          team.push(best.name);
+        }
+        return team;
+      }
+
+      function localSearch(startNames) {
+        var cur = finalize(startNames, true);
+        if (!cur) return null;
+        var best = cur, pass = 0, improved = true;
+        while (improved && pass++ < 6 && !timeUp()) {
+          improved = false;
+          for (var i = 0; i < best.team.length && !timeUp(); i++) {
+            if (lockedSet[best.team[i]]) continue; // 保留的场上干员不参与替换
+            for (var j = 0; j < swapPool.length && !timeUp(); j++) {
+              var o = swapPool[j];
+              if (best.team.indexOf(o.name) >= 0) continue;
+              var cand = best.team.slice();
+              cand[i] = o.name;
+              if (soloTarget) {
+                var soloN = 0;
+                cand.forEach(function (n) { if (hasSolo(core.opByName[n])) soloN++; });
+                if (soloN > 1) continue;
+              }
+              var sol = finalize(cand, true);
+              if (sol && sol.score > best.score + 1e-9) { best = sol; improved = true; }
+            }
+          }
+        }
+        return best;
+      }
+
+      var picked = seeds.slice(0, 8);
+      var resSeen = Object.create(null);
+      var collect = function (sol) {
+        if (!sol) return;
+        var key = keyOf(sol.team);
+        if (resSeen[key]) return;
+        resSeen[key] = 1;
+        solutions.push(sol);
+      };
+
+      picked.forEach(function (names, idx) {
+        var filled = fillTeam(names, idx % 3 === 2 && !timeUp());
+        collect(finalize(filled, true));
+        var sol = localSearch(filled);
+        if (sol) collect(sol);
+      });
+
+      // 用最小补充集直接拉满也可能有解（种子本身已满员的情况）
+      seeds.forEach(function (names) {
+        if (names.length !== strictSize) return;
+        collect(finalize(names, true));
+      });
+
+      complete = !timeUp();
+      if (!solutions.length) {
+        baseRet.note = complete
+          ? '没有满足所选标签的方案：在「等阶限制 / 禁用 / 保留干员」条件下凑不出这 ' + strictSize + ' 人'
+          : '已达时间上限，暂未找到满足所选标签的方案：可以放宽条件或减少标签';
+      }
+    }
+
+    if (mode === 'strict') runStrict(); else runMin();
+    sortSolutions();
+
+    var out = {
+      freeMode: freeMode,
+      solutions: solutions.slice(0, mode === 'strict' ? 60 : limit),
       searched: P.length,
       elapsed: Date.now() - t0,
       complete: complete,
       truncated: solutions.length >= limit,
-      strict: strict,
-      sortMode: sortMode
+      mode: mode,
+      strictSize: strictSize,
+      maxTier: maxOpTier,
+      minSize: solutions.length ? (mode === 'min' ? solutions[0].size : strictSize) : 0,
+      weights: w,
+      note: baseRet.note || ''
     };
+    if (freeMode && out.solutions.length) {
+      out.note = mode === 'strict'
+        ? '未选择标签：已保留场上干员，并按评分补满 ' + strictSize + ' 人'
+        : '未选择标签：只保留场上已有干员';
+    }
+    if (!out.solutions.length && !out.note) out.note = '没有满足所选标签的方案';
+    return out;
   }
 
-  var api = { solve: solve };
+  // 单队评分（供界面/测试使用，不做搜索）
+  function evaluate(core, names, opts) {
+    opts = opts || {};
+    names = (names || []).filter(function (n) { return core.opByName[n]; });
+    var w = mergeWeights(opts.weights);
+    var bench = (opts.bench || []).filter(function (n) { return core.opByName[n]; });
+    var st = core.compute({
+      field: names, bench: bench, elite: opts.elite || [], pivots: opts.pivots || {},
+      bans: opts.bans, extraLayers: opts.extraLayers
+    });
+    var ops = names.map(function (n) { return core.opByName[n]; });
+    var sc = scoreState(core, st, ops, { weights: w, multiFaction: !!opts.multiFaction, vision: !!opts.vision });
+    var totalTier = 0;
+    ops.forEach(function (o) { totalTier += (o.tierNum || 0); });
+    return { score: sc.score, parts: sc.parts, factions: sc.factions, state: st, totalTier: totalTier, totalRate: st.totalRate };
+  }
+
+  var api = {
+    solve: solve,
+    evaluate: evaluate,
+    CAT_OF: CAT_OF,
+    CAT_ORDER: CAT_ORDER,
+    DEFAULT_WEIGHTS: DEFAULT_WEIGHTS,
+    WEIGHT_META: WEIGHT_META,
+    mergeWeights: mergeWeights
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.Solver = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this);
-</script>
+})(typeof globalThis !== 'undefined' ? globalThis : this);</script>
 <script>/* 关系图谱：干员 ↔ 盟约 二部图（Canvas 力导向，可拖拽） */
 (function (global) {
   'use strict';
@@ -911,6 +1303,187 @@ footer a{color:#6f8ba3;text-decoration:none}
 
   var R_OP = 21, R_COV = 24;
 
+  /* ---------- 环形聚焦布局 ----------
+   * 已点亮的盟约围成一环；牵到 ≥2 个已点亮盟约的干员放环内，
+   * 其余干员与未点亮的盟约放环外。纯几何计算，便于单测。
+   */
+  function norm2pi(a) {
+    a = a % (Math.PI * 2);
+    return a < 0 ? a + Math.PI * 2 : a;
+  }
+  function circMean(angles) {
+    if (!angles.length) return null;
+    var x = 0, y = 0;
+    for (var i = 0; i < angles.length; i++) { x += Math.cos(angles[i]); y += Math.sin(angles[i]); }
+    if (Math.abs(x) < 1e-6 && Math.abs(y) < 1e-6) return angles[0];
+    return Math.atan2(y, x);
+  }
+  // 按期望角度铺开，并保证相邻至少 gap；挤满时退化为均匀分布
+  function spreadAngles(desired, gap) {
+    var m = desired.length;
+    if (!m) return [];
+    if (m * gap >= Math.PI * 2 - 0.04) {
+      var s0 = circMean(desired);
+      if (s0 == null) s0 = 0;
+      var even = [];
+      for (var e = 0; e < m; e++) even.push(s0 + (e * Math.PI * 2) / m);
+      return even;
+    }
+    var list = [];
+    for (var i = 0; i < m; i++) list.push({ a: norm2pi(desired[i]), i: i });
+    list.sort(function (x, y) { return x.a - y.a; });
+    var best = -1, at = 0;
+    for (var k = 0; k < m; k++) {
+      var nxt = k + 1 < m ? list[k + 1].a : list[0].a + Math.PI * 2;
+      var g = nxt - list[k].a;
+      if (g > best) { best = g; at = k + 1; }
+    }
+    var out = new Array(m);
+    var prev = null;
+    for (k = 0; k < m; k++) {
+      var item = list[(at + k) % m];
+      var a = item.a;
+      if (prev != null && a < prev + gap) a = prev + gap;
+      out[item.i] = norm2pi(a);
+      prev = a;
+    }
+    return out;
+  }
+
+  function ringLayout(nodes, w, h, params) {
+    params = params || {};
+    var covs = [], ops = [];
+    nodes.forEach(function (n) { (n.type === 'cov' ? covs : ops).push(n); });
+    var active = covs.filter(function (n) { return n.level > 0; });
+    if (active.length < 2 || !ops.length) return null;
+
+    var rOp = 0, rCov = 0;
+    ops.forEach(function (n) { rOp = Math.max(rOp, n.r || R_OP); });
+    covs.forEach(function (n) { rCov = Math.max(rCov, n.r || R_COV); });
+    if (!rOp) rOp = R_OP;
+    if (!rCov) rCov = R_COV;
+
+    var charge = params.charge != null ? params.charge : 1;
+    var grav = params.grav != null ? params.grav : 1;
+    var len = params.len != null ? params.len : 1;
+
+    var cx = w / 2, cy = h / 2;
+    var maxOuter = Math.min(w / 2 - 30, h / 2 - 58);
+    maxOuter = Math.max(72, maxOuter);
+    var R1 = Math.min(maxOuter / 1.85, Math.min(w, h) * 0.30);
+    R1 = Math.max(50, R1 * (0.92 + 0.05 * len));
+    // 保证外圈与环之间至少放得下一个干员 + 一个盟约
+    R1 = Math.min(R1, Math.max(42, maxOuter - (rOp + rCov + 14)));
+
+    var covAngle = Object.create(null);
+    var covActive = Object.create(null);
+    var pos = Object.create(null);
+
+    active.forEach(function (n, i) {
+      var a = -Math.PI / 2 + (i * Math.PI * 2) / active.length;
+      covAngle[n.name] = a;
+      covActive[n.name] = 1;
+      pos[n.id] = { x: cx + Math.cos(a) * R1, y: cy + Math.sin(a) * R1 };
+    });
+    var inactive = covs.filter(function (n) { return !(n.level > 0); });
+    inactive.forEach(function (n, i) {
+      covAngle[n.name] = -Math.PI / 2 + ((i + 0.5) * Math.PI * 2) / Math.max(1, inactive.length);
+      covActive[n.name] = 0;
+    });
+
+    function actLinks(op) {
+      var k = 0;
+      (op.covs || []).forEach(function (c) { if (covActive[c]) k++; });
+      return k;
+    }
+    function anglesFor(op) {
+      var out = [];
+      (op.covs || []).forEach(function (c) { if (covAngle[c] != null) out.push(covAngle[c]); });
+      return out;
+    }
+
+    // 环内：牵到 ≥2 条已点亮盟约的干员；一个都没有时退而求其次，取牵线最多的
+    var ranked = ops.slice().sort(function (a, b) {
+      return actLinks(b.op) - actLinks(a.op) || (b.op.covs || []).length - (a.op.covs || []).length;
+    });
+    var inside = ranked.filter(function (n) { return actLinks(n.op) >= 2; });
+    if (!inside.length && ranked.length) {
+      var top = actLinks(ranked[0].op);
+      if (top >= 1) {
+        inside = ranked.filter(function (n) { return actLinks(n.op) === top; })
+          .slice(0, Math.max(1, Math.min(2, Math.floor(ops.length / 2))));
+      }
+    }
+    var cap = Math.max(1, Math.floor(ops.length * 0.7));
+    if (inside.length > cap) inside = inside.slice(0, cap);
+    // 环内容量：按可用半径与节点大小决定最多能放几个，放不下就挪到环外
+    var capIn = Math.max(24, R1 - (rOp + rCov + 12));
+    var maxInside = 1;
+    for (var mk = 2; mk <= inside.length; mk++) {
+      if ((rOp + 8) / Math.sin(Math.PI / mk) <= capIn) maxInside = mk;
+      else break;
+    }
+    if (inside.length > maxInside) inside = inside.slice(0, maxInside);
+    var insideSet = Object.create(null);
+    inside.forEach(function (n) { insideSet[n.id] = 1; });
+
+    // 期望方向：干员先按自己盟约的方向取均值
+    var order = Object.create(null);
+    ops.forEach(function (n, i) { order[n.id] = i; });
+    ops.forEach(function (n) {
+      var as = anglesFor(n.op);
+      n._a = as.length ? circMean(as) : -Math.PI / 2 + (order[n.id] * Math.PI * 2) / ops.length;
+    });
+    // 未点亮的盟约贴着它的成员干员
+    inactive.forEach(function (n) {
+      var as = [];
+      ops.forEach(function (o) { if ((o.op.covs || []).indexOf(n.name) >= 0) as.push(o._a); });
+      if (as.length) covAngle[n.name] = circMean(as);
+    });
+    // 环外干员用修正后的角度重算
+    ops.forEach(function (n) {
+      if (insideSet[n.id]) return;
+      var as = anglesFor(n.op);
+      if (as.length) n._a = circMean(as);
+    });
+
+    // 环内：小圈均匀排开，整体朝向期望方向的均值
+    var kIn = inside.length;
+    if (kIn) {
+      var Rin = R1 * (0.36 + 0.05 * grav);
+      if (kIn > 1) {
+        var need = (rOp + 8) / Math.sin(Math.PI / kIn);
+        if (need > Rin) Rin = need;
+      }
+      if (Rin > capIn) Rin = capIn;
+      if (Rin > R1 * 0.82) Rin = R1 * 0.82;
+      var sortedIn = inside.slice().sort(function (a, b) { return a._a - b._a; });
+      var startA = circMean(sortedIn.map(function (n) { return n._a; }));
+      if (startA == null) startA = -Math.PI / 2;
+      var stepIn = (Math.PI * 2) / kIn;
+      sortedIn.forEach(function (n, i) {
+        var a = startA + (i - (kIn - 1) / 2) * stepIn;
+        pos[n.id] = { x: cx + Math.cos(a) * Rin, y: cy + Math.sin(a) * Rin };
+      });
+    }
+
+    // 环外：牵线少的干员 + 未点亮的盟约共用一条外圈
+    var belt = [];
+    ops.forEach(function (n) { if (!insideSet[n.id]) belt.push({ n: n, a: n._a }); });
+    inactive.forEach(function (n) { belt.push({ n: n, a: covAngle[n.name] }); });
+    if (belt.length) {
+      var Rout = maxOuter; // 外圈贴在安全边界上，环与外圈之间留出标签空间
+      var gap = (rOp + rCov + 8 + 4 * charge) / Math.max(1, Rout);
+      var beltAngles = spreadAngles(belt.map(function (b) { return b.a; }), gap);
+      belt.forEach(function (b, i) {
+        var a = beltAngles[i];
+        pos[b.n.id] = { x: cx + Math.cos(a) * Rout, y: cy + Math.sin(a) * Rout };
+      });
+    }
+
+    return { cx: cx, cy: cy, r: R1, active: active.length, pos: pos, angles: covAngle };
+  }
+
   function Graph(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
@@ -920,7 +1493,7 @@ footer a{color:#6f8ba3;text-decoration:none}
     this.alpha = 0;
     this.dpr = Math.max(1, Math.min(2, global.devicePixelRatio || 1));
     this.core = null; this.state = null;
-    this.params = { grav: 1, charge: 1, len: 1, standard: true };
+    this.params = { grav: 1, charge: 1, len: 1, layout: 'ring' };
     var self = this;
 
     this._pos = function (e) {
@@ -952,8 +1525,8 @@ footer a{color:#6f8ba3;text-decoration:none}
       if (self.dragNode) {
         self.dragNode.x = p.x; self.dragNode.y = p.y;
         self.dragNode.vx = 0; self.dragNode.vy = 0;
-        self.alpha = Math.max(self.alpha, 0.45);
-        self.start();
+        if (self.params.layout === 'ring') self.draw();
+        else { self.alpha = Math.max(self.alpha, 0.45); self.start(); }
         return;
       }
       var best = self._hit(p);
@@ -970,15 +1543,24 @@ footer a{color:#6f8ba3;text-decoration:none}
         return;
       }
       e.preventDefault();
+      if (self.params.layout === 'ring') {
+        self._cancelAnim();
+        self.dragNode = n; self.dragging = true; n.fixed = true;
+        canvas.style.cursor = 'grabbing';
+        self._startElastic();
+        return;
+      }
       self.dragNode = n; self.dragging = true; n.fixed = true;
       canvas.style.cursor = 'grabbing';
       self.alpha = Math.max(self.alpha, 0.5); self.start();
     });
 
     canvas.addEventListener('pointerup', function () {
+      var wasDrag = !!self.dragNode;
       if (self.dragNode) { self.dragNode.fixed = false; self.dragNode = null; }
       self.panning = null;
       canvas.style.cursor = 'grab';
+      if (wasDrag && self.params.layout === 'ring') self._startElastic();
     });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
@@ -996,7 +1578,9 @@ footer a{color:#6f8ba3;text-decoration:none}
       self.zoom = 1; self.panX = 0; self.panY = 0; self.draw();
     });
     canvas.addEventListener('pointerleave', function () {
+      var wasDrag = !!self.dragNode;
       if (self.dragNode) { self.dragNode.fixed = false; self.dragNode = null; }
+      if (wasDrag && self.params.layout === 'ring') self._startElastic();
       if (self.hover) { self.hover = null; self.draw(); }
     });
 
@@ -1014,8 +1598,24 @@ footer a{color:#6f8ba3;text-decoration:none}
     this.canvas.width = Math.round(w * this.dpr);
     this.canvas.height = Math.round(h * this.dpr);
     this.w = w; this.h = h;
-    if (this.nodes.length) { this.reanchor(); this.alpha = 0.7; this.start(); }
+    this._rescaleNodes();
+    if (this.nodes.length) {
+      if (this.preview) { this.buildPreview(); }
+      else {
+        var ring = this.reanchor();
+        if (!ring) { this.alpha = 0.7; this.start(); }
+      }
+    }
     this.draw();
+  };
+
+  // 画布越小，节点等比缩小一点，避免环内/环外挤在一起
+  Graph.prototype._scaleFor = function () {
+    return Math.max(0.72, Math.min(1, Math.min(this.w, this.h) / 500));
+  };
+  Graph.prototype._rescaleNodes = function () {
+    var sc = this._scaleFor();
+    this.nodes.forEach(function (n) { n.r = (n.type === 'cov' ? R_COV : R_OP) * sc; });
   };
 
   Graph.prototype.setData = function (core) {
@@ -1026,7 +1626,7 @@ footer a{color:#6f8ba3;text-decoration:none}
     }, this);
   };
 
-  Graph.prototype.reanchor = function () {
+  Graph.prototype._anchorLegacy = function () {
     var covs = this.nodes.filter(function (n) { return n.type === 'cov'; });
     var cx = this.w / 2, cy = this.h / 2;
     var R = Math.min(this.w, this.h) * (covs.length > 10 ? 0.36 : 0.30);
@@ -1035,7 +1635,7 @@ footer a{color:#6f8ba3;text-decoration:none}
       n.ax = cx + Math.cos(a) * R;
       n.ay = cy + Math.sin(a) * R * 0.95;
     });
-    var ops = this.nodes.filter(function (n) { return n.type === 'op'; });
+    var ops = this.nodes.filter(function (n) { return n.type === 'op' && n.op; });
     ops.forEach(function (n, i) {
       var mine = covs.filter(function (c) { return n.op.covs.indexOf(c.name) >= 0; });
       var a = mine.length
@@ -1045,6 +1645,127 @@ footer a{color:#6f8ba3;text-decoration:none}
       n.ax = cx + Math.cos(a) * r;
       n.ay = cy + Math.sin(a) * r * 0.95;
     });
+  };
+
+  // 环形聚焦：位置一次算好，再用一小段补间过渡；不走力模拟，避免节点漂出分区
+  Graph.prototype.reanchor = function () {
+    if (this.preview) return false;
+    this._cancelAnim();
+    this._rescaleNodes();
+    if ((this.params.layout || 'ring') === 'ring') {
+      var ring = ringLayout(this.nodes, this.w, this.h, this.params);
+      if (ring) {
+        this.ring = ring;
+        var pos = ring.pos;
+        this.nodes.forEach(function (n) {
+          var p = pos[n.id];
+          if (!p) return;
+          n.ax = p.x; n.ay = p.y;
+          n.tx = p.x; n.ty = p.y;
+          if (n._fresh) { n.x = p.x; n.y = p.y; }
+        });
+        this._startElastic();
+        return true;
+      }
+    }
+    this.ring = null;
+    this._anchorLegacy();
+    this.nodes.forEach(function (n) { n.tx = n.ax; n.ty = n.ay; });
+    return false;
+  };
+
+  Graph.prototype._cancelAnim = function () {
+    if (this._anim) { global.cancelAnimationFrame(this._anim); this._anim = null; }
+    if (this._elastic) { global.cancelAnimationFrame(this._elastic); this._elastic = null; }
+  };
+
+  // 环形布局的「软」归位：锚点弹簧 + 局部排斥 + 弱链接。拖拽时邻居会被带一下，松手后弹回环上。
+  Graph.prototype._startElastic = function () {
+    var self = this;
+    if (this._elastic) return;
+    this._elasticTicks = 0;
+    var step = function () {
+      self._elastic = null;
+      self._elasticTicks++;
+      var moving = self._elasticStep();
+      self.draw();
+      if (moving || self.dragNode) self._elastic = global.requestAnimationFrame(step);
+    };
+    this._elastic = global.requestAnimationFrame(step);
+  };
+
+  Graph.prototype._elasticStep = function () {
+    var nodes = this.nodes, links = this.links, w = this.w, h = this.h;
+    var drag = this.dragNode;
+    if (!nodes.length) return false;
+    if (!drag && this._elasticTicks > 240) {
+      nodes.forEach(function (n) { n.x = n.ax; n.y = n.ay; n.vx = 0; n.vy = 0; });
+      return false;
+    }
+
+    // ① 锚点弹簧：盟约硬一点，干员软一点
+    nodes.forEach(function (n) {
+      if (n === drag) { n.vx = 0; n.vy = 0; return; }
+      var k = n.type === 'cov' ? 0.35 : 0.045;
+      n.vx += (n.ax - n.x) * k;
+      n.vy += (n.ay - n.y) * k;
+    });
+
+    // ② 弱链接：拖动一个节点时，另一端被轻轻带一下（弹性的来源）
+    if (drag) {
+      links.forEach(function (l) {
+        var other = l.a === drag ? l.b : (l.b === drag ? l.a : null);
+        if (!other) return;
+        var dx = other.x - drag.x, dy = other.y - drag.y;
+        var d = Math.sqrt(dx * dx + dy * dy) || 1;
+        var f = ((d - 120) / d) * 0.014;
+        other.vx += dx * f; other.vy += dy * f;
+      });
+    }
+
+    // ③ 局部排斥：只在真的挤到一起时推开
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var A = nodes[i], B = nodes[j];
+        var dx = B.x - A.x, dy = B.y - A.y;
+        var d2 = dx * dx + dy * dy;
+        var minD = A.r + B.r;
+        if (d2 >= minD * minD) continue;
+        var d = Math.sqrt(d2) || 1;
+        var push = (minD - d) * 0.25;
+        var ux = dx / d || 0.01, uy = dy / d || 0.01;
+        // 盟约是环上的「钉子」，不被挤走；干员承压后弹开
+        var pinA = A.type === 'cov' && A !== drag;
+        var pinB = B.type === 'cov' && B !== drag;
+        if (pinA && pinB) continue;
+        if (pinA) { B.vx += ux * push * 2; B.vy += uy * push * 2; }
+        else if (pinB) { A.vx -= ux * push * 2; A.vy -= uy * push * 2; }
+        else {
+          if (A !== drag) { A.vx -= ux * push; A.vy -= uy * push; }
+          if (B !== drag) { B.vx += ux * push; B.vy += uy * push; }
+        }
+      }
+    }
+
+    // ④ 积分 + 边界
+    var moving = false;
+    nodes.forEach(function (n) {
+      if (n === drag) { n.vx = 0; n.vy = 0; return; }
+      n.vx *= 0.76; n.vy *= 0.76;
+      if (Math.abs(n.vx) < 0.01) n.vx = 0;
+      if (Math.abs(n.vy) < 0.01) n.vy = 0;
+      n.x += n.vx; n.y += n.vy;
+      var pad = n.r + 6;
+      if (n.x < pad) { n.x = pad; n.vx = Math.abs(n.vx) * 0.4; }
+      if (n.x > w - pad) { n.x = w - pad; n.vx = -Math.abs(n.vx) * 0.4; }
+      if (n.y < pad) { n.y = pad; n.vy = Math.abs(n.vy) * 0.4; }
+      if (n.y > h - pad) { n.y = h - pad; n.vy = -Math.abs(n.vy) * 0.4; }
+      if (Math.abs(n.ax - n.x) + Math.abs(n.ay - n.y) > 0.35 || Math.abs(n.vx) + Math.abs(n.vy) > 0.06) moving = true;
+    });
+    if (!moving && !drag) {
+      nodes.forEach(function (n) { n.x = n.ax; n.y = n.ay; n.vx = 0; n.vy = 0; });
+    }
+    return moving;
   };
 
   Graph.prototype.update = function (state) {
@@ -1062,7 +1783,7 @@ footer a{color:#6f8ba3;text-decoration:none}
     covs.forEach(function (c) {
       var prev = old['c:' + c.name];
       nodes.push({
-        id: 'c:' + c.name, type: 'cov', name: c.name, kind: c.kind, r: R_COV, src: (DATA.icons && DATA.icons[c.name]) || '',
+        id: 'c:' + c.name, type: 'cov', name: c.name, kind: c.kind, r: R_COV, _fresh: !prev, src: (DATA.icons && DATA.icons[c.name]) || '',
         x: prev ? prev.x : this.w / 2, y: prev ? prev.y : this.h / 2,
         vx: 0, vy: 0, ax: 0, ay: 0,
         level: state.tiers[c.name].level, count: state.counts[c.name],
@@ -1075,7 +1796,7 @@ footer a{color:#6f8ba3;text-decoration:none}
       if (!op) return;
       var prev = old['o:' + name];
       nodes.push({
-        id: 'o:' + name, type: 'op', name: name, op: op, r: R_OP, idx: oi, src: (DATA.avatars && DATA.avatars[name]) || '',
+        id: 'o:' + name, type: 'op', name: name, op: op, r: R_OP, idx: oi, _fresh: !prev, src: (DATA.avatars && DATA.avatars[name]) || '',
         x: prev ? prev.x : this.w / 2, y: prev ? prev.y : this.h / 2,
         vx: 0, vy: 0, ax: 0, ay: 0,
         color: TIER_COLORS[(op.tierNum || 1) - 1]
@@ -1091,12 +1812,16 @@ footer a{color:#6f8ba3;text-decoration:none}
     });
 
     this.nodes = nodes; this.links = links;
-    this.reanchor();
+    var ring = this.reanchor();
     this.loadImages();
+    if (ring) {
+      this.draw();
+      return;
+    }
     // 新节点从锚点附近轻微抖入，避免全部叠在中心
     nodes.forEach(function (n) {
-      if (!old[n.id]) {
-        if (self.params.standard) {
+      if (n._fresh) {
+        if (self.params.layout === 'standard') {
           n.x = n.ax + (Math.random() - 0.5) * 30;
           n.y = n.ay + (Math.random() - 0.5) * 30;
         } else {
@@ -1117,6 +1842,7 @@ footer a{color:#6f8ba3;text-decoration:none}
   };
 
   Graph.prototype.buildPreview = function () {
+    this.ring = null;
     var spec = this.preview, self = this;
     var w = this.w, h = this.h;
     var cx = w / 2, cy = h / 2;
@@ -1187,11 +1913,18 @@ footer a{color:#6f8ba3;text-decoration:none}
   };
 
   Graph.prototype.setParams = function (p) {
+    var changed = false;
     if (p) {
       if (p.grav != null) this.params.grav = p.grav;
       if (p.charge != null) this.params.charge = p.charge;
       if (p.len != null) this.params.len = p.len;
-      if (p.standard != null) this.params.standard = p.standard;
+      if (p.layout && p.layout !== this.params.layout) { this.params.layout = p.layout; changed = true; }
+    }
+    if (this.preview) { this.alpha = Math.max(this.alpha, 0.6); this.start(); return; }
+    if (this.nodes.length && (changed || this.params.layout === 'ring')) {
+      var ring = this.reanchor();
+      if (!ring) { this.alpha = Math.max(this.alpha, 0.7); this.start(); }
+      return;
     }
     this.alpha = Math.max(this.alpha, 0.6);
     this.start();
@@ -1218,7 +1951,7 @@ footer a{color:#6f8ba3;text-decoration:none}
     });
 
     // 标准结构布局：盟约锚在环形位置，干员围绕自己的盟约（锚点弹簧力）
-    if (P.standard) {
+    if (P.layout !== 'free') {
       nodes.forEach(function (nd) {
         var k = (nd.type === 'cov' ? 0.06 : 0.014) * alpha;
         nd.vx += (nd.ax - nd.x) * k;
@@ -1314,6 +2047,7 @@ footer a{color:#6f8ba3;text-decoration:none}
     ctx.clearRect(0, 0, w, h);
     var hover = this.hover;
     var nodes = this.nodes, links = this.links;
+    var ringInfo = this.ring;
 
     // 空图谱不画提示文字：由页面上的 #emptyHint 统一显示，避免两段文字叠在一起
     if (!nodes.length) return;
@@ -1341,6 +2075,28 @@ footer a{color:#6f8ba3;text-decoration:none}
       ctx.stroke();
     });
 
+    // 环形聚焦：把已点亮的盟约描成一环，环内加一点暖色底光
+    if (this.ring) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(this.ring.cx, this.ring.cy, this.ring.r, 0, Math.PI * 2);
+      var grad = ctx.createRadialGradient ? ctx.createRadialGradient(this.ring.cx, this.ring.cy, this.ring.r * 0.12, this.ring.cx, this.ring.cy, this.ring.r) : null;
+      if (grad && grad.addColorStop) {
+        grad.addColorStop(0, 'rgba(230,194,122,0.055)');
+        grad.addColorStop(0.72, 'rgba(230,194,122,0.018)');
+        grad.addColorStop(1, 'rgba(230,194,122,0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(this.ring.cx, this.ring.cy, this.ring.r, 0, Math.PI * 2);
+      ctx.setLineDash([6, 10]);
+      ctx.strokeStyle = 'rgba(230,194,122,0.18)';
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+      ctx.restore();
+    }
+
     var imgs = this.imgs || {};
     nodes.forEach(function (n) {
       var dim = hover && !related[n.id];
@@ -1358,9 +2114,10 @@ footer a{color:#6f8ba3;text-decoration:none}
           ctx.restore();
         } else {
           ctx.fillStyle = active ? '#e6c27a' : '#8a97a6';
-          ctx.font = '600 11px "Microsoft YaHei",sans-serif';
+          var fsz = n.name.length <= 2 ? 11 : (n.name.length <= 3 ? 10 : 9);
+          ctx.font = '600 ' + fsz + 'px "Microsoft YaHei",sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(n.name.slice(0, 2), n.x, n.y);
+          ctx.fillText(n.name, n.x, n.y + 0.5);
         }
         ctx.beginPath(); hexPath(ctx, n.x, n.y, n.r);
         ctx.strokeStyle = active ? n.color : 'rgba(150,165,180,0.45)';
@@ -1378,6 +2135,26 @@ footer a{color:#6f8ba3;text-decoration:none}
         ctx.fillStyle = active ? n.color : '#8a97a6';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(label, n.x, n.y + n.r + 11);
+
+        // 有图标时，名字写在节点上方；环外的未点亮盟约朝外放，避开环上的徽章
+        if (ready) {
+          ctx.font = '600 10.5px "Microsoft YaHei",sans-serif';
+          var nameW = ctx.measureText(n.name).width + 10;
+          var nameX = n.x, nameTop = n.y - n.r - 18;
+          if (ringInfo && !active) {
+            var ndx = n.x - ringInfo.cx, ndy = n.y - ringInfo.cy;
+            var ndd = Math.sqrt(ndx * ndx + ndy * ndy) || 1;
+            nameX = n.x + (ndx / ndd) * (n.r + 9);
+            nameTop = n.y + (ndy / ndd) * (n.r + 9) - 7.5;
+          }
+          roundRect(ctx, nameX - nameW / 2, nameTop, nameW, 15, 7.5);
+          ctx.fillStyle = 'rgba(8,12,17,0.85)'; ctx.fill();
+          ctx.strokeStyle = active ? n.color + '55' : 'rgba(150,165,180,0.22)';
+          ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = active ? n.color : '#8a97a6';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(n.name, nameX, nameTop + 7.5);
+        }
       } else {
         ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
         ctx.fillStyle = '#0d161e'; ctx.fill();
@@ -1395,12 +2172,21 @@ footer a{color:#6f8ba3;text-decoration:none}
         ctx.strokeStyle = n.color; ctx.lineWidth = 2.2; ctx.stroke();
         ctx.font = '10px "Microsoft YaHei",sans-serif';
         var nw = ctx.measureText(n.name).width + 10;
-        var ny = n.y + n.r + 3;
-        roundRect(ctx, n.x - nw / 2, ny, nw, 14, 7);
+        var lx = n.x, lyTop = n.y + n.r + 3;
+        // 环外干员的标签朝外放，避免压到环上的盟约
+        if (ringInfo) {
+          var rdx = n.x - ringInfo.cx, rdy = n.y - ringInfo.cy;
+          var rd = Math.sqrt(rdx * rdx + rdy * rdy) || 1;
+          if (rd > ringInfo.r) {
+            lx = n.x + (rdx / rd) * (n.r + 10);
+            lyTop = n.y + (rdy / rd) * (n.r + 10) - 7;
+          }
+        }
+        roundRect(ctx, lx - nw / 2, lyTop, nw, 14, 7);
         ctx.fillStyle = 'rgba(8,12,17,0.88)'; ctx.fill();
         ctx.fillStyle = dim ? '#55616e' : '#b6c4d3';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(n.name, n.x, ny + 7.5);
+        ctx.fillText(n.name, lx, lyTop + 7.5);
       }
       ctx.globalAlpha = 1;
     });
@@ -1421,7 +2207,7 @@ footer a{color:#6f8ba3;text-decoration:none}
     ctx.lineWidth = 1.5; ctx.stroke();
   }
 
-  var api = { Graph: Graph, TIER_COLORS: TIER_COLORS };
+  var api = { Graph: Graph, TIER_COLORS: TIER_COLORS, ringLayout: ringLayout };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.GraphView = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
@@ -1439,11 +2225,20 @@ footer a{color:#6f8ba3;text-decoration:none}
   var TIER_COLORS = GraphView.TIER_COLORS;
   var AVA = (DATA.avatars || {});
 
+  function defaultSolveCfg() {
+    return {
+      mode: 'min', locked: false, harmony: true,
+      pivot: false, pivotCount: 1,
+      vision: false, multiFaction: false, playerTier: 6,
+      weights: null
+    };
+  }
   var S = {
     field: [], bench: [], elite: {}, pivots: {}, bans: [], locked: {},
+    solveCfg: defaultSolveCfg(),
     maxSlots: 8, view: 'graph', search: '', covFilter: null, tierFilter: 0, filterMode: 'tier',
     autoBench: { on: false, covs: [] },
-    settings: { grav: 1, charge: 1, len: 1, standard: true, litOnly: false, treePending: true },
+    settings: { grav: 1, charge: 1, len: 1, layout: 'ring', litOnly: false, treePending: true },
     selected: null, archive: false
   };
   var undoStack = [];
@@ -1983,7 +2778,7 @@ footer a{color:#6f8ba3;text-decoration:none}
 
   var KEY = 'garrison-sim-v1';
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ field: S.field, bench: S.bench, elite: S.elite, pivots: S.pivots, bans: S.bans, maxSlots: S.maxSlots, archive: S.archive, autoBench: S.autoBench, settings: S.settings })); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify({ field: S.field, bench: S.bench, elite: S.elite, pivots: S.pivots, bans: S.bans, maxSlots: S.maxSlots, archive: S.archive, autoBench: S.autoBench, settings: S.settings, solveCfg: S.solveCfg })); } catch (e) {}
   }
   function load() {
     try {
@@ -1994,9 +2789,21 @@ footer a{color:#6f8ba3;text-decoration:none}
       S.elite = o.elite || {}; S.pivots = o.pivots || {}; S.bans = o.bans || [];
       S.maxSlots = o.maxSlots === 9 ? 9 : 8; S.archive = !!o.archive;
       if (o.autoBench) S.autoBench = { on: !!o.autoBench.on, covs: o.autoBench.covs || [] };
+      S.solveCfg = defaultSolveCfg();
+      if (o.solveCfg && typeof o.solveCfg === 'object') {
+        var sc = o.solveCfg;
+        ['locked', 'harmony', 'pivot', 'vision', 'multiFaction'].forEach(function (k) {
+          if (typeof sc[k] === 'boolean') S.solveCfg[k] = sc[k];
+        });
+        if (sc.mode === 'strict' || sc.mode === 'min') S.solveCfg.mode = sc.mode;
+        if (isFinite(sc.pivotCount)) S.solveCfg.pivotCount = Math.max(0, Math.min(3, parseInt(sc.pivotCount, 10) || 0));
+        if (isFinite(sc.playerTier)) S.solveCfg.playerTier = Math.max(1, Math.min(6, parseInt(sc.playerTier, 10) || 6));
+        if (sc.weights && typeof sc.weights === 'object') S.solveCfg.weights = sc.weights;
+      }
       if (o.settings) {
         ['grav', 'charge', 'len'].forEach(function (k) { if (typeof o.settings[k] === 'number') S.settings[k] = o.settings[k]; });
-        S.settings.standard = o.settings.standard !== false;
+        if (o.settings.layout === 'ring' || o.settings.layout === 'standard' || o.settings.layout === 'free') S.settings.layout = o.settings.layout;
+        else S.settings.layout = o.settings.standard === false ? 'free' : 'ring';
         S.settings.litOnly = !!o.settings.litOnly;
         S.settings.treePending = o.settings.treePending !== false;
       }
@@ -2042,39 +2849,98 @@ footer a{color:#6f8ba3;text-decoration:none}
     btn.className = 'tag' + (next ? (next === ats[ats.length - 1] ? ' lv2' : ' lv1') : '');
     btn.textContent = c.name + (next ? ' ' + next : '');
   }
+  function cfgWeights() {
+    var base = Solver.DEFAULT_WEIGHTS;
+    var w = S.solveCfg.weights || {};
+    var out = {};
+    Object.keys(base).forEach(function (k) {
+      out[k] = (typeof w[k] === 'number' && isFinite(w[k])) ? w[k] : base[k];
+    });
+    return out;
+  }
+  function setSolveMode(m) {
+    S.solveCfg.mode = m === 'strict' ? 'strict' : 'min';
+    document.querySelectorAll('.mode-btn').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.mode === S.solveCfg.mode);
+    });
+    save();
+  }
+  function fmt1(v) { return (Math.round((v || 0) * 10) / 10).toFixed(1); }
+  function scoreTitle(sol) {
+    var p = sol.parts || {};
+    var lines = ['评分 ' + fmt1(sol.score),
+      '盟约 ' + (p.cov >= 0 ? '+' : '') + fmt1(p.cov),
+      '阵营 ' + (p.faction >= 0 ? '+' : '') + fmt1(p.faction),
+      '棋子等阶 +' + fmt1(p.quality)];
+    if (p.rate) lines.push('每回合叠层 +' + fmt1(p.rate));
+    if (p.vision) lines.push('远见叠层 ' + (p.vision >= 0 ? '+' : '') + fmt1(p.vision));
+    if (p.warn) lines.push('警告扣分 ' + fmt1(p.warn));
+    return lines.join('\n');
+  }
   function runSolve() {
     var targets = Object.keys(solveTargets).map(function (k) { return { cov: k, at: solveTargets[k] }; });
-    if (!targets.length) { toast('先选至少一个盟约档位'); return; }
-    var maxSize = $('optArchive').checked ? 9 : 8;
-    var pivotOn = $('optPivot').checked;
-    var pivotBudget = pivotOn ? Math.max(0, Math.min(3, parseInt($('pivotCount').value, 10) || 0)) : 0;
-    var locked = $('optLocked').checked ? S.field.slice() : [];
-    if (locked.length > maxSize) { toast('场上人数超过上限'); return; }
-    var strict = $('optStrict') ? $('optStrict').checked : false;
-    var harmony = $('optHarmony') ? $('optHarmony').checked : true;
-    var sortMode = $('optSort') ? $('optSort').value : 'cov';
+    var cfg = S.solveCfg;
+    var lockedNow = cfg.locked ? S.field.slice() : [];
+    // 没选标签但勾了「保留场上已有干员」：把保留的干员直接交给求解器
+    if (!targets.length && !lockedNow.length) { toast('先选至少一个盟约档位，或勾选「保留场上已有干员」'); return; }
+    var pivotBudget = cfg.pivot ? Math.max(0, Math.min(3, parseInt(cfg.pivotCount, 10) || 0)) : 0;
     var t0 = performance.now();
-    var r = Solver.solve(core, {
-      targets: targets, maxSize: maxSize, bans: S.bans, locked: locked, pivotBudget: pivotBudget,
-      elite: Object.keys(S.elite).filter(function (k) { return S.elite[k]; }),
-      bench: S.bench, strict: strict, harmony: harmony, sortMode: sortMode
-    });
+    var r;
+    try {
+      r = Solver.solve(core, {
+        targets: targets, maxSize: S.maxSlots, mode: cfg.mode,
+        locked: lockedNow,
+        bans: S.bans, pivotBudget: pivotBudget,
+        elite: Object.keys(S.elite).filter(function (k) { return S.elite[k]; }),
+        bench: S.bench, harmony: cfg.harmony,
+        multiFaction: cfg.multiFaction, vision: cfg.vision,
+        playerTier: cfg.playerTier, weights: S.solveCfg.weights
+      });
+    } catch (e) {
+      console.error('solve failed', e);
+      $('solveStat').textContent = '计算出错';
+      $('solveInfo').innerHTML = '<b>计算出错：</b>' + String((e && e.message) || e);
+      return;
+    }
     var ms = Math.round(performance.now() - t0);
     window.__LAST_SOLVE__ = r;
-    $('solveStat').textContent = '用时 ' + ms + 'ms · 搜索 ' + (r.searched || 0) + ' 名候选 · ' + r.solutions.length + ' 个方案（每种人数显示前 12 套）' + (strict ? ' · 严格模式' : '') + (harmony ? ' · 允许魔王' : ' · 不带魔王') + (sortMode === 'tier' ? ' · 等阶优先' : ' · 盟约优先') + (r.truncated ? ' · 已达上限' : '');
+    var modeTxt = r.mode === 'strict' ? ('严格 ' + r.strictSize + ' 人') : '最少人数';
+    $('solveStat').textContent = '用时 ' + ms + 'ms · ' + modeTxt + ' · 搜索 ' + (r.searched || 0) + ' 名候选 · ' +
+      r.solutions.length + ' 个方案' + (cfg.locked ? ' · 保留场上 ' + S.field.length + ' 人' : '') +
+      (r.maxTier < 6 ? ' · 上场最高 ' + r.maxTier + ' 阶' : '') + (r.complete ? '' : ' · 已达时间上限');
+    $('solveInfo').innerHTML = r.note ? '<b>提示：</b>' + r.note : '';
     var box = $('results'); box.innerHTML = '';
-    if (!r.solutions.length) { box.innerHTML = '<div class="empty-tip">' + (r.note || '没有满足条件的配队，试试降低档位或取消 BAN') + '</div>'; return; }
-    var perSize = {};
-    var shown = r.solutions.filter(function (s) { perSize[s.size] = (perSize[s.size] || 0) + 1; return perSize[s.size] <= 12; });
-    shown.forEach(function (sol) {
+    if (!r.solutions.length) {
+      box.innerHTML = '<div class="empty-tip">' + (r.note || '没有满足条件的配队，试试降低档位、放宽等阶限制或取消禁用') + '</div>';
+      return;
+    }
+    var list = r.solutions;
+    if (r.mode !== 'strict') {
+      var perSize = {}, picked = [];
+      list.forEach(function (s) {
+        perSize[s.size] = (perSize[s.size] || 0) + 1;
+        if (perSize[s.size] <= 12) picked.push(s);
+      });
+      list = picked;
+    }
+    list.forEach(function (sol) {
       var d = el('div', 'res');
       var top = el('div', 'top');
-      top.appendChild(el('span', 'size', sol.size + ' 人'));
+      top.appendChild(el('span', 'size', r.mode === 'strict' ? sol.size + ' 人（固定）' : sol.size + ' 人'));
+      var sc = el('span', 'score', '评分 ' + fmt1(sol.score));
+      sc.title = scoreTitle(sol);
+      top.appendChild(sc);
       top.appendChild(el('span', 'stat', '总等阶 ' + (sol.totalTier || 0)));
       top.appendChild(el('span', 'stat', '激活 ' + (sol.litCount || 0) + ' 盟约'));
       top.appendChild(el('span', 'stat', '点亮 ' + sol.tierCount + ' 档'));
       if (sol.extraTiers > 0) top.appendChild(el('span', 'stat', '额外 ' + sol.extraTiers + ' 档'));
       if (sol.totalRate) top.appendChild(el('span', 'stat', '每回合 +' + sol.totalRate + ' 层'));
+      if (sol.factions && sol.factions.length) {
+        var fs2 = el('span', 'stat', '阵营 ' + sol.factions.length);
+        fs2.title = '已激活阵营：' + sol.factions.join('、');
+        top.appendChild(fs2);
+      }
+      if (sol.state && sol.state.stackRate) top.appendChild(el('span', 'stat', '叠层 +' + sol.state.stackRate));
       var piv = Object.keys(sol.pivots || {}).length;
       if (piv) top.appendChild(el('span', 'stat', '变形同构体 ' + piv));
       if (sol.elite && sol.elite.length) top.appendChild(el('span', 'stat', '精锐 ' + sol.elite.length));
@@ -2097,8 +2963,119 @@ footer a{color:#6f8ba3;text-decoration:none}
       d.appendChild(covIconRow(sol));
       box.appendChild(d);
     });
-    $('solveInfo').textContent = r.note || '';
   }
+
+  // 权重条：以 0 为中点，正数往右、负数往左；单极区间照常从 0 填起
+  function sliderTrack(inp, val, min, max) {
+    var span = (max - min) || 1;
+    function pct(v) { return Math.max(0, Math.min(100, ((v - min) / span) * 100)); }
+    var a = Math.min(pct(val), pct(0)), b = Math.max(pct(val), pct(0));
+    var layers = [];
+    if (min < 0 && max > 0) layers.push('linear-gradient(to right,transparent 49.5%,#4a5666 49.5%,#4a5666 50.5%,transparent 50.5%)');
+    layers.push('linear-gradient(to right,#232c36 0%,#232c36 ' + a + '%,#e6c27a ' + a + '%,#e6c27a ' + b + '%,#232c36 ' + b + '%,#232c36 100%)');
+    inp.style.setProperty('--track', layers.join(','));
+  }
+
+  function openSolverCfg() { buildSolverCfg(); $('solverCfgOverlay').classList.add('show'); }
+
+  function buildSolverCfg() {
+    var b = $('cfgBody'); if (!b) return;
+    var cfg = S.solveCfg;
+    b.innerHTML = '';
+
+    var s1 = el('div', 'cfg-sec');
+    s1.appendChild(el('h4', null, '计算模式'));
+    s1.appendChild(el('div', 'cfg-hint', '所选标签是硬性条件：两种模式都会先满足标签，再在满足标签的方案里按评分排序。'));
+    var mrow = el('div', 'mode-row');
+    [['min', '最少人数', '满足标签所需的最少上场人数'],
+     ['strict', '严格 ' + S.maxSlots + ' 人', '拉满场上上限，再比拼盟约与棋子质量']].forEach(function (x) {
+      var btn = el('button', 'mode-btn' + (cfg.mode === x[0] ? ' on' : ''), '<b>' + x[1] + '</b><small>' + x[2] + '</small>');
+      btn.dataset.mode = x[0];
+      btn.onclick = function () { setSolveMode(x[0]); buildSolverCfg(); };
+      mrow.appendChild(btn);
+    });
+    s1.appendChild(mrow);
+    s1.appendChild(oRow('人事部档案（场上上限 9）', S.maxSlots === 9, function (v) {
+      S.archive = v; S.maxSlots = v ? 9 : 8;
+      if (S.field.length > S.maxSlots) S.field = S.field.slice(0, S.maxSlots);
+      renderAll(); buildSolverCfg();
+    }, '开启后严格模式为 9 人'));
+    s1.appendChild(oRow('保留场上已有干员', cfg.locked, function (v) { cfg.locked = v; save(); }, '这些干员固定入队，其余名额由求解器补齐'));
+
+    var tRow = el('div', 'cfg-num');
+    tRow.appendChild(el('span', null, '玩家等阶'));
+    var tInp = document.createElement('input');
+    tInp.type = 'range'; tInp.min = 1; tInp.max = 6; tInp.step = 1; tInp.value = cfg.playerTier;
+    var tVal = el('b', null, '');
+    var tDesc = el('div', 'cfg-hint', '');
+    var syncT = function () {
+      var mx = Math.min(6, (+tInp.value) + 1);
+      tVal.textContent = tInp.value + ' 阶';
+      tDesc.textContent = '上场干员最高 ' + mx + ' 阶' + (mx >= 6 ? '（不限制）' : '');
+    };
+    tInp.oninput = function () { cfg.playerTier = parseInt(this.value, 10) || 6; syncT(); save(); };
+    syncT();
+    tRow.appendChild(tInp); tRow.appendChild(tVal);
+    s1.appendChild(tRow); s1.appendChild(tDesc);
+    b.appendChild(s1);
+
+    var s2 = el('div', 'cfg-sec');
+    s2.appendChild(el('h4', null, '队伍构成'));
+    s2.appendChild(oRow('队伍中是否有魔王（调和 +1 人）', cfg.harmony, function (v) { cfg.harmony = v; save(); }, '魔王是真实单位，占 1 个上场位；取消勾选则完全不算调和'));
+    var prow = el('div', 'opt-row');
+    prow.appendChild(oRow('使用变形同构体', cfg.pivot, function (v) {
+      cfg.pivot = v; var n = $('cfgPivotCount'); if (n) n.disabled = !v; save();
+    }, '只在某盟约差 1 人时补位'));
+    var pc = document.createElement('input');
+    pc.className = 'num'; pc.id = 'cfgPivotCount'; pc.type = 'number'; pc.min = 0; pc.max = 3;
+    pc.value = cfg.pivotCount; pc.disabled = !cfg.pivot;
+    pc.onchange = function () {
+      cfg.pivotCount = Math.max(0, Math.min(3, parseInt(this.value, 10) || 0));
+      this.value = cfg.pivotCount; save();
+    };
+    prow.appendChild(pc);
+    s2.appendChild(prow);
+    s2.appendChild(oRow('需要远见叠层', cfg.vision, function (v) { cfg.vision = v; save(); }, '优先空弦 / 渡桥这类能持续叠层的远见干员；只有「获得时」的远见干员会被压低'));
+    s2.appendChild(oRow('允许组建多阵营队伍', cfg.multiFaction, function (v) { cfg.multiFaction = v; save(); }, '开启：阵营盟约权重为正且高于主战斗；关闭：阵营权重为负，多阵营阵容很少出现'));
+    b.appendChild(s2);
+
+    var s3 = el('div', 'cfg-sec');
+    s3.appendChild(el('h4', null, '盟约权重'));
+    s3.appendChild(el('div', 'cfg-hint', '标签不参与这里的取舍：先满足标签，再比较其余盟约的权重。档位越高权重越大（1 + 0.5 ×（档位 − 1））。'));
+    var w = cfgWeights();
+    Solver.WEIGHT_META.forEach(function (meta) {
+      var row = el('div', 'opt-slider');
+      row.appendChild(el('span', null, meta.label));
+      var inp = document.createElement('input');
+      inp.type = 'range'; inp.min = meta.min; inp.max = meta.max; inp.step = meta.step; inp.value = w[meta.key];
+      var dec = meta.step < 0.05 ? 2 : 1;
+      var val = el('span', 'val', (+w[meta.key]).toFixed(dec));
+      sliderTrack(inp, +w[meta.key], meta.min, meta.max);
+      inp.oninput = function () {
+        var v = parseFloat(this.value);
+        var nw = cfgWeights(); nw[meta.key] = v;
+        cfg.weights = nw;
+        val.textContent = v.toFixed(dec);
+        sliderTrack(this, v, meta.min, meta.max);
+        save();
+      };
+      row.appendChild(inp); row.appendChild(val);
+      row.appendChild(el('div', 'desc', meta.desc));
+      s3.appendChild(row);
+    });
+    b.appendChild(s3);
+
+    var s4 = el('div', 'cfg-sec');
+    s4.appendChild(el('h4', null, '评分怎么算'));
+    s4.appendChild(el('div', 'cfg-hint',
+      '评分 = 已激活盟约的类别权重（按档位放大）+ 阵营项 + 棋子等阶 × 权重 + 每回合叠层 × 权重 + 远见叠层 − 警告扣分。' +
+      '「最少人数」先比人数、再比评分；「严格」人数固定，直接比评分。'));
+    s4.appendChild(el('div', 'cfg-hint',
+      '运营类（远见 / 奇迹 / 投资人）默认权重为负：除非需要它们的资金或标签，否则不会为了点亮它们牺牲战斗盟约。' +
+      '阵营项默认也为负；需要多阵营阵容时打开「允许组建多阵营队伍」，阵营权重会变成正数且高于主战斗。'));
+    b.appendChild(s4);
+  }
+
   function litCovs(sol) {
     var arr = [];
     core.covenants.forEach(function (c) {
@@ -2114,7 +3091,7 @@ footer a{color:#6f8ba3;text-decoration:none}
       var w = el('span', 'covic');
       w.title = x.name + ' · ' + x.level + ' 档';
       if (DATA.icons && DATA.icons[x.name]) { var im = el('img'); im.src = DATA.icons[x.name]; im.alt = x.name; w.appendChild(im); }
-      else w.appendChild(document.createTextNode(x.name));
+      w.appendChild(el('span', 'nm', x.name));
       var b = el('b', null, String(x.level)); w.appendChild(b);
       row.appendChild(w);
     });
@@ -2239,9 +3216,20 @@ footer a{color:#6f8ba3;text-decoration:none}
 
     var s5 = el('div', 'opt-sec');
     s5.appendChild(el('h4', null, '关系图谱'));
-    s5.appendChild(oRow('使用标准结构布局', S.settings.standard, function (v) {
-      S.settings.standard = v; applyGraphSettings(); save();
-    }, '开：初始按环形锚点铺开，整体更规整；关：随机铺开，让节点自己长成最终的形状'));
+    var layRow = el('div', 'opt-row');
+    layRow.appendChild(el('span', null, '布局'));
+    var laySel = document.createElement('select');
+    laySel.className = 'opt-select';
+    [['ring', '环形聚焦（激活盟约成环）'], ['standard', '标准结构'], ['free', '自由力导向']].forEach(function (x) {
+      var op = document.createElement('option');
+      op.value = x[0]; op.textContent = x[1];
+      laySel.appendChild(op);
+    });
+    laySel.value = S.settings.layout;
+    laySel.onchange = function () { S.settings.layout = this.value; applyGraphSettings(); save(); };
+    layRow.appendChild(laySel);
+    layRow.appendChild(el('span', 'hint', '环形下：引力=环内聚集，斥力=间距，边长=环的大小'));
+    s5.appendChild(layRow);
     s5.appendChild(oSlider('引力', 'grav', 0.2, 3, 0.1, '向心力：把整个图谱的质心拉回画布中心的强度。太小会漂出视野，太大则全挤向中间。'));
     s5.appendChild(oSlider('斥力', 'charge', 0, 2, 0.1, '节点之间互相推开的强度。越大越分散、间距越大。'));
     s5.appendChild(oSlider('边长', 'len', 0.4, 2.2, 0.1, '干员与盟约之间连线的理想长度。越大连线越长、图越舒展。'));
@@ -2340,7 +3328,8 @@ footer a{color:#6f8ba3;text-decoration:none}
     '<li><b>Delete</b>：移除上次点选的干员；<b>Ctrl/⌘ + Z</b> 或顶栏 ↶：撤销。</li>',
     '<li>拖到<b>整备区</b>：放入替补席，不占场上人数，但会计入远见 / 奇迹 / 投资人。</li>',
     '<li>顶栏<b>人事部档案</b>：场上上限 8 → 9。</li>',
-    '<li>顶栏<b>选项</b>：自动整备（远见/奇迹/投资人/助力 直接进整备区）、场上人数、盟约栏过滤、配队树开关、图谱的引力/斥力/边长与标准结构布局，都集中在这里。</li>',
+    '<li>顶栏<b>选项</b>：自动整备（远见/奇迹/投资人/助力 直接进整备区）、场上人数、盟约栏过滤、配队树开关、图谱布局与引力/斥力/边长，都集中在这里。</li>',
+    '<li><b>关系图谱 · 环形聚焦</b>：已点亮的盟约围成一环，牵到 2 个及以上点亮盟约的干员放进环内；其余干员与未点亮的盟约排在环外。可在 选项 → 关系图谱 切换为「标准结构」或「自由力导向」。</li>',
     '</ul>',
     '<h4>盟约规则</h4>',
     '<ul>',
@@ -2356,11 +3345,15 @@ footer a{color:#6f8ba3;text-decoration:none}
     '<h4>求解器</h4>',
     '<ul>',
     '<li>核心盟约点一次 = 3 档，再点 = 6 档，第三次取消；附加盟约同理循环。</li>',
-    '<li>结果按<b>人数升序</b>排列，同人数按附带点亮档位、层数增速排序；每种人数最多显示 12 套。</li>',
-    '<li>可勾选<b>人事部档案</b>（9 人）、<b>使用变形同构体</b>并指定数量（N=0 时完全不计转职，搜索空间更小）。</li>',
-    '<li><b>严格模式</b>：只允许点亮你勾选的目标盟约，且档位与目标完全一致（不多不少）；调和、独行等附带点亮也算「多」。</li>',
-    '<li><b>队伍中允许魔王</b>：魔王是真实单位，占 1 个上场位，入队后调和生效（所有核心盟约 +1 人）。默认允许求解器把魔王编入队伍；取消勾选则完全不考虑调和。策略赠送的「盟约·辅助干员」不会出现在候选池。</li>',
-    '<li><b>排序</b>：默认「激活盟约优先」，人数相同先比激活盟约数，再比总等阶、每回合叠层；「棋子等阶优先」则先比总等阶。两种口径各有取舍，可按自己的偏好切换。</li>',
+    '<li><b>最少人数</b>：在满足所选标签的前提下，求出上场人数最少的方案，同人数按评分排序；每种人数最多显示 12 套。</li>',
+    '<li><b>严格 8 人</b>：队伍固定拉满场上上限（默认 8 人，开人事部档案后为 9 人），先满足标签，再在满员方案里比盟约与棋子质量。</li>',
+    '<li><b>没选标签但勾选了「保留场上已有干员」</b>：最少人数模式只保留场上这些人，严格模式会保留他们并按评分补满人数。</li>',
+    '<li><b>评分</b>：已激活盟约按类别权重计分——主战斗 &gt; 生存 &gt; 辅战斗 &gt; 特殊 &gt; 运营，档位越高权重越大（1 + 0.5 ×（档位 − 1））；再加棋子等阶、每回合叠层、远见叠层，减去警告扣分。</li>',
+    '<li><b>阵营盟约</b>：默认权重为负，求解器不会主动凑多阵营；打开「允许组建多阵营队伍」后变为正数且高于主战斗。标签永远是硬条件，排在评分之前。</li>',
+    '<li><b>需要远见叠层</b>：优先空弦 / 渡桥这类能持续叠层的远见干员；黍 / 寒檀这类只有「获得时 / 仅凑人数」的远见会被压低（标签需要时仍然保留）。</li>',
+    '<li><b>等阶限制</b>：玩家等阶 N → 上场干员最高 N+1 阶（上限 Ⅵ），用来模拟自己的招募池。</li>',
+    '<li><b>队伍中是否有魔王</b>：魔王是真实单位，占 1 个上场位，入队后调和生效（所有核心盟约 +1 人）；取消勾选则完全不考虑调和。策略赠送的「盟约·辅助干员」不会出现在候选池。</li>',
+    '<li>其余开关（人事部档案、保留场上已有干员、变形同构体、远见叠层、多阵营、等阶限制、盟约权重）都收在「一键求解 → ⚙ 求解设置」里，设置会保存在本地。</li>',
     '<li>求解会补上规则：调和让核心盟约少 1 人、独行至多 1 人、绝技自动按精锐计算、远见/奇迹/投资人计入整备区、协防干员按被 BAN 阵营兜底。</li>',
     '<li>顶栏<b>本局禁用</b>：禁用的盟约不能作为目标，相关干员会降权。</li>',
     '</ul>',
@@ -2401,7 +3394,15 @@ footer a{color:#6f8ba3;text-decoration:none}
     $('btnSolve').onclick = function () { prefillTargets(); syncTags(); $('solverOverlay').classList.add('show'); };
     $('closeSolver').onclick = function () { $('solverOverlay').classList.remove('show'); };
     $('runSolve').onclick = runSolve;
-    $('optPivot').onchange = function () { $('pivotCount').disabled = !this.checked; };
+    document.querySelectorAll('#solverOverlay .mode-btn').forEach(function (b) {
+      b.onclick = function () { setSolveMode(b.dataset.mode); };
+    });
+    $('openSolverCfg').onclick = openSolverCfg;
+    $('closeSolverCfg').onclick = function () { $('solverCfgOverlay').classList.remove('show'); };
+    $('doneSolverCfg').onclick = function () { $('solverCfgOverlay').classList.remove('show'); };
+    $('resetSolverCfg').onclick = function () {
+      S.solveCfg.weights = null; save(); buildSolverCfg(); toast('已恢复默认权重');
+    };
     $('btnOptions').onclick = openOptions;
     $('closeOpt').onclick = function () {
       $('optOverlay').classList.remove('show');
@@ -2588,6 +3589,7 @@ footer a{color:#6f8ba3;text-decoration:none}
   renderCovFilter();
   $('covFilter').style.display = 'none';
   bindEvents();
+  setSolveMode(S.solveCfg.mode);
   var archiveBtn = el('button', 'btn ghost', '人事部档案 8');
   archiveBtn.onclick = function () {
     S.archive = !S.archive; S.maxSlots = S.archive ? 9 : 8;
@@ -2603,7 +3605,11 @@ footer a{color:#6f8ba3;text-decoration:none}
   window.__APP__ = {
     S: S, core: core, renderAll: renderAll, graph: graph, solve: Solver.solve, compute: compute,
     getTargets: function () { return solveTargets; },
-    getPreviewGraph: function () { return prevGraph; }
+    getPreviewGraph: function () { return prevGraph; },
+    getSolveCfg: function () { return S.solveCfg; },
+    setSolveMode: setSolveMode,
+    runSolve: runSolve,
+    buildSolverCfg: buildSolverCfg
   };
 })();
 </script>
